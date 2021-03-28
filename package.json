@@ -1,0 +1,24 @@
+{
+  "name": "apeswap-pool-factory",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "ganache": "npx ganache-cli",
+    "test": "truffle test",
+    "compile": "truffle compile"
+  },
+  "author": "DeFiFoFum",
+  "license": "ISC",
+  "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.10",
+    "dotenv": "^8.2.0",
+    "truffle": "^5.2.6",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "truffle-plugin-verify": "^0.5.7"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.0.0",
+    "ethers": "^5.0.32"
+  }
+}
