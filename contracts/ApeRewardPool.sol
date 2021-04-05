@@ -202,7 +202,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         uint256 finalDepositAmount = 0;
         if(_amount > 0) {
             uint256 preStakeBalance = totalStakeTokenBalance();
-            pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+            stakeToken.safeTransferFrom(address(msg.sender), address(this), _amount);
             // Reflect tokens may remove a portion of the transfer for fees. This ensures only the
             //  amount deposited into the contract counds for staking
             finalDepositAmount = totalStakeTokenBalance().sub(preStakeBalance);
@@ -228,7 +228,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         // Withdraw stake tokens
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
-            pool.lpToken.safeTransfer(address(msg.sender), _amount);
+            stakeToken.safeTransfer(address(msg.sender), _amount);
             totalStaked = totalStaked.sub(_amount);
         }
         /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
@@ -363,12 +363,10 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
 
     /// @dev Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw() external {
-        PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
-        pool.lpToken.safeTransfer(address(msg.sender), user.amount);
+        stakeToken.safeTransfer(address(msg.sender), user.amount);
         totalStaked = totalStaked.sub(user.amount);
         user.amount = 0;
-        // TODO: This looks like it could be used as an exploit. Might be best to remove it. 
         user.rewardDebt = 0;
         emit EmergencyWithdraw(msg.sender, user.amount);
     }
