@@ -64,6 +64,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
 	// The block number when mining ends.	
     uint256 public bonusEndBlock;
 
+    event Harvest(address indexed user, uint256 amount);
     event Deposit(address indexed user, uint256 amount);
     event DepositRewards(uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
@@ -150,6 +151,43 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         }
     }
 
+    /// @dev Harvest currently earned rewards
+    function harvest() external {
+        PoolInfo storage pool = poolInfo[0];
+        UserInfo storage user = userInfo[msg.sender];
+        updatePool(0);
+        harvestInternal(msg.sender);
+        /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
+        ///  cannot be double harvested
+        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
+        
+    }
+
+    /// @dev Transfers pending rewards to address
+    /// @notice This function does not do important updates to save on gas:
+    ///  - update the pool before hand 
+    ///  - update the users rewardDebt afterward 
+    function harvestInternal(address _toHarvest) internal {
+        PoolInfo storage pool = poolInfo[0];
+        UserInfo storage user = userInfo[_toHarvest];
+        // If user.amount is zero then no rewards can be transferred 
+        if (user.amount > 0) {
+            uint256 pending = user.amount.mul(pool.accRewardTokenPerShare).div(1e12).sub(user.rewardDebt);
+            if(pending > 0) {
+                uint256 currentRewardBalance = rewardBalance();
+                if(currentRewardBalance > 0) {
+                    if(pending > currentRewardBalance) {
+                        _safeTransferReward(_toHarvest, currentRewardBalance);
+                        emit Harvest(_toHarvest, currentRewardBalance);
+                    } else {
+                        _safeTransferReward(_toHarvest, pending);
+                        emit Harvest(_toHarvest, pending);
+                    }
+                }
+            }
+        }
+    }
+
     /// Deposit staking token into the contract to earn rewards. 
     /// @dev Since this contract needs to be supplied with rewards we are 
     ///  sending the balance of the contract if the pending rewards are higher
@@ -158,7 +196,9 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         updatePool(0);
-
+        // Harvest senders rewards before their reward debt is updated below.
+        harvestInternal(msg.sender);
+        // Deposit stake tokens
         uint256 finalDepositAmount = 0;
         if(_amount > 0) {
             uint256 preStakeBalance = totalStakeTokenBalance();
@@ -169,22 +209,9 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
             totalStaked = totalStaked.add(finalDepositAmount);
             user.amount = user.amount.add(finalDepositAmount);
         }
-
-        if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accRewardTokenPerShare).div(1e12).sub(user.rewardDebt);
-            if(pending > 0) {
-                uint256 currentRewardBalance = rewardBalance();
-                if(currentRewardBalance > 0) {
-                    if(pending > currentRewardBalance) {
-                        _safeTransferReward(address(msg.sender), currentRewardBalance);
-                        user.rewardDebt = user.rewardDebt.add(currentRewardBalance);
-                    } else {
-                        _safeTransferReward(address(msg.sender), pending);
-                        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
-                    }
-                }
-            }
-        }
+        /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
+        ///  cannot be double harvested
+        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
 
         emit Deposit(msg.sender, finalDepositAmount);
     }
@@ -196,24 +223,17 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(0);
-        uint256 pending = user.amount.mul(pool.accRewardTokenPerShare).div(1e12).sub(user.rewardDebt);
-        if(pending > 0) {
-            uint256 currentRewardBalance = rewardBalance();
-            if(currentRewardBalance > 0) {
-                if(pending > currentRewardBalance) {
-                    _safeTransferReward(address(msg.sender), currentRewardBalance);
-                    user.rewardDebt = user.rewardDebt.add(currentRewardBalance);
-                } else {
-                    _safeTransferReward(address(msg.sender), pending);
-                    user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
-                }
-            }
-        }
+        // Harvest senders rewards before their reward debt is updated below.
+        harvestInternal(msg.sender);
+        // Withdraw stake tokens
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
             totalStaked = totalStaked.sub(_amount);
         }
+        /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
+        ///  cannot be double harvested
+        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
 
         emit Withdraw(msg.sender, _amount);
     }
