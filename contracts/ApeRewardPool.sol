@@ -129,7 +129,9 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
-
+        // TEST: That this update works as expected
+        updateRewardPerBlock();
+        //  needing to do it elsewhere
         /// @dev totalStaked may be less than the stake token balance of this contract because of 
         ///   reflect fees. With this approach, the reflect fees do not count towards rewards
         if (totalStaked == 0) {
