@@ -32,7 +32,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         IBEP20 lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. Rewards to distribute per block.
         uint256 lastRewardBlock;  // Last block number that Rewards distribution occurs.
-        uint256 accRewardTokenPerShare; // Accumulated Rewards per share, times 1e12. See below.
+        uint256 accRewardTokenPerShare; // Accumulated Rewards per share, times 1e30. See below.
     }
 
     // The stake token
@@ -115,10 +115,10 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
             // token reward share of this pool
             uint256 tokenReward = multiplier.mul(rewardPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
             // Calculate the reward per lp staked
-            accRewardTokenPerShare = accRewardTokenPerShare.add(tokenReward.mul(1e12).div(totalStaked));
+            accRewardTokenPerShare = accRewardTokenPerShare.add(tokenReward.mul(1e30).div(totalStaked));
         }
         // Multiply the user amount of staked tokens multiplied by the 
-        return user.amount.mul(accRewardTokenPerShare).div(1e12).sub(user.rewardDebt);
+        return user.amount.mul(accRewardTokenPerShare).div(1e30).sub(user.rewardDebt);
     }
 
     /* Public Functions */
@@ -141,7 +141,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 tokenReward = multiplier.mul(rewardPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         totalRewards = totalRewards.add(tokenReward);
-        pool.accRewardTokenPerShare = pool.accRewardTokenPerShare.add(tokenReward.mul(1e12).div(totalStaked));
+        pool.accRewardTokenPerShare = pool.accRewardTokenPerShare.add(tokenReward.mul(1e30).div(totalStaked));
         pool.lastRewardBlock = block.number;
     }
 
@@ -161,7 +161,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         harvestInternal(msg.sender);
         /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
         ///  cannot be double harvested
-        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e30);
         
     }
 
@@ -174,7 +174,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         UserInfo storage user = userInfo[_toHarvest];
         // If user.amount is zero then no rewards can be transferred 
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accRewardTokenPerShare).div(1e12).sub(user.rewardDebt);
+            uint256 pending = user.amount.mul(pool.accRewardTokenPerShare).div(1e30).sub(user.rewardDebt);
             if(pending > 0) {
                 uint256 currentRewardBalance = rewardBalance();
                 if(currentRewardBalance > 0) {
@@ -213,7 +213,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         }
         /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
         ///  cannot be double harvested
-        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e30);
 
         emit Deposit(msg.sender, finalDepositAmount);
     }
@@ -235,7 +235,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         }
         /// @dev Set the user reward debt to the latest pool.accRewardTokenPerShare so rewards
         ///  cannot be double harvested
-        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accRewardTokenPerShare).div(1e30);
 
         emit Withdraw(msg.sender, _amount);
     }
