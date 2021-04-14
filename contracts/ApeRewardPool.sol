@@ -395,7 +395,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     /// @dev Remove excess stake tokens earned by reflect fees
     function skimStakeTokenFees() external onlyFactoryOwner {
         uint256 stakeTokenFeeBalance = getStakeTokenFeeBalance();
-        stakeToken.transfer(msg.sender, stakeTokenFeeBalance);
+        stakeToken.safeTransfer(msg.sender, stakeTokenFeeBalance);
         emit SkimStakeTokenFees(msg.sender, stakeTokenFeeBalance);
     }
 
@@ -406,7 +406,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         require(address(token) != address(stakeToken), "can not sweep stake token");
         require(address(token) != address(rewardToken), "can not sweep reward token");
         uint256 balance = token.balanceOf(address(this));
-        token.transfer(msg.sender, balance);
+        token.safeTransfer(msg.sender, balance);
         emit EmergencySweepWithdraw(msg.sender, token, balance);
     }
 }
