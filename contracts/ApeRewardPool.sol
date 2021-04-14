@@ -288,7 +288,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     /// @return wei balace of contract
     function totalStakeTokenBalance() public view returns (uint256) {
         // Return BEO20 balance
-        return IBEP20(stakeToken).balanceOf(address(this));
+        return stakeToken.balanceOf(address(this));
     }
 
     /// @dev Get the amount of rewards that are left to be paid out
@@ -395,7 +395,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     /// @dev Remove excess stake tokens earned by reflect fees
     function skimStakeTokenFees() external onlyFactoryOwner {
         uint256 stakeTokenFeeBalance = getStakeTokenFeeBalance();
-        IBEP20(stakeToken).transfer(msg.sender, stakeTokenFeeBalance);
+        stakeToken.transfer(msg.sender, stakeTokenFeeBalance);
         emit SkimStakeTokenFees(msg.sender, stakeTokenFeeBalance);
     }
 
