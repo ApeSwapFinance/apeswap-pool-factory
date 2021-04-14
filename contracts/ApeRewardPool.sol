@@ -63,6 +63,8 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     uint256 public startBlock;
 	// The block number when mining ends.	
     uint256 public bonusEndBlock;
+    // participators
+    address[] public addressList;
 
     event Harvest(address indexed user, uint256 amount);
     event Deposit(address indexed user, uint256 amount);
@@ -205,6 +207,9 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         if(_amount > 0) {
             uint256 preStakeBalance = totalStakeTokenBalance();
             stakeToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+            if (userInfo[msg.sender].amount == 0) {
+                addressList.push(address(msg.sender));
+            }
             // Reflect tokens may remove a portion of the transfer for fees. This ensures only the
             //  amount deposited into the contract counds for staking
             finalDepositAmount = totalStakeTokenBalance().sub(preStakeBalance);
@@ -314,6 +319,11 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     }
 
     /* External Functions */
+
+    /// @dev Return the number of addresses that have participated in this pool
+    function getAddressListLength() external view returns (uint256) {
+        return addressList.length;
+    }
 
     /// @dev Deposit BEP20 Rewards into contract
     function depositBEP20Rewards(uint256 _amount) external {
