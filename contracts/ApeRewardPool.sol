@@ -355,7 +355,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     /// @notice Update the block where rewards end
     /// @param  _bonusEndBlock The block when rewards will end
     function updateBonusEndBlock(uint256 _bonusEndBlock) external onlyFactoryOwner {
-        require(_bonusEndBlock > getNextRewardBlock() && _bonusEndBlock > block.number, 'new bonus end block must be greater than start block and current block');
+        require(_bonusEndBlock > getNextRewardBlock() && _bonusEndBlock > block.number, 'invalid bonusEndBlock');
         bonusEndBlock = _bonusEndBlock;
         updateRewardPerBlock();
         emit UpdateBonusEndBlock(bonusEndBlock);
