@@ -77,7 +77,8 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     event EmergencyRewardWithdraw(address indexed user, uint256 amount);
     event EmergencySweepWithdraw(address indexed user, IBEP20 indexed token, uint256 amount);
 
-    // TEST: this cannot be called twice
+    /// @dev A factory is able to deploy this contract without constructor arguments, which then
+    ///  calls initilize as the contstructor which can only be called once
     function initialize(
         IBEP20 _stakeToken,
         address _rewardToken,
@@ -102,11 +103,10 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         }));
 
         totalAllocPoint = 1000;
-        // TEST: that the proper factory is calling this
         transferFactoryInternal(_msgSender());
     }
 
-    // View function to see pending Reward on frontend.
+    /// @dev View function to see pending Reward on frontend.
     function pendingReward(address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[_user];
@@ -131,9 +131,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
-        // TEST: That this update works as expected
         updateRewardPerBlock();
-        //  needing to do it elsewhere
         /// @dev totalStaked may be less than the stake token balance of this contract because of 
         ///   reflect fees. With this approach, the reflect fees do not count towards rewards
         if (totalStaked == 0) {
@@ -148,7 +146,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     }
 
     /// @dev  Update reward variables for all pools. Be careful of gas spending!
-    function massUpdatePools() public {
+    function massUpdatePools() external {
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
             updatePool(pid);
@@ -181,10 +179,10 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
                 uint256 currentRewardBalance = rewardBalance();
                 if(currentRewardBalance > 0) {
                     if(pending > currentRewardBalance) {
-                        _safeTransferReward(_toHarvest, currentRewardBalance);
+                        safeTransferRewardInternal(_toHarvest, currentRewardBalance);
                         emit Harvest(_toHarvest, currentRewardBalance);
                     } else {
-                        _safeTransferReward(_toHarvest, pending);
+                        safeTransferRewardInternal(_toHarvest, pending);
                         emit Harvest(_toHarvest, pending);
                     }
                 }
@@ -196,7 +194,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     /// @dev Since this contract needs to be supplied with rewards we are 
     ///  sending the balance of the contract if the pending rewards are higher
     /// @param _amount The amount of staking tokens to deposit
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         updatePool(0);
@@ -207,7 +205,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         if(_amount > 0) {
             uint256 preStakeBalance = totalStakeTokenBalance();
             stakeToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-            if (userInfo[msg.sender].amount == 0) {
+            if (userInfo[msg.sender].rewardDebt == 0) {
                 addressList.push(address(msg.sender));
             }
             // Reflect tokens may remove a portion of the transfer for fees. This ensures only the
@@ -225,7 +223,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
 
     /// Withdraw rewards and/or staked tokens. Pass a 0 amount to withdraw only rewards 
     /// @param _amount The amount of staking tokens to withdraw
-    function withdraw(uint256 _amount) public {
+    function withdraw(uint256 _amount) external {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -346,9 +344,8 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
 
     /// @param _to address to send reward token to
     /// @param _amount value of reward token to transfer
-    function _safeTransferReward(address _to, uint256 _amount) internal {
+    function safeTransferRewardInternal(address _to, uint256 _amount) internal {
         if(isBNBRewardPool) {
-            // TEST: transfer BNB
             // Transfer BNB to address
             (bool success, ) = _to.call{gas: 23000, value: _amount}("");
             require(success, 'TransferHelper: BNB_TRANSFER_FAILED'); 
@@ -379,7 +376,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
         stakeToken.safeTransfer(address(msg.sender), user.amount);
         totalStaked = totalStaked.sub(user.amount);
         user.amount = 0;
-        user.rewardDebt = 0;
+        user.rewardDebt = 69;
         emit EmergencyWithdraw(msg.sender, user.amount);
     }
 
@@ -387,7 +384,7 @@ contract ApeRewardPool is Initializable, FactoryOwnable {
     function emergencyRewardWithdraw(uint256 _amount) external onlyFactoryOwner {
         require(_amount <= rewardBalance(), 'not enough rewards');
         // Withdraw rewards
-        _safeTransferReward(address(msg.sender), _amount);
+        safeTransferRewardInternal(address(msg.sender), _amount);
         totalRewards = totalRewards.sub(_amount);
         emit EmergencyRewardWithdraw(msg.sender, _amount);
     }

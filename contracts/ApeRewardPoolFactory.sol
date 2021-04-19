@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
-
-// solhint-disable-next-line compiler-version
 pragma solidity ^0.8.0;
 
-// TODO: Factory should be behind a proxy
-
 import "@openzeppelin/contracts/access/Ownable.sol";
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import "./interfaces/IApePair.sol";
 import "./BEP20/IBEP20.sol";
 import "./ApeRewardPool.sol";
 
 contract ApeRewardPoolFactory is Ownable {
+    using SafeERC20 for IBEP20;
+
     bytes32 public constant INIT_CODE_PAIR_HASH =
         keccak256(abi.encodePacked(type(ApeRewardPool).creationCode));
 
@@ -62,7 +61,6 @@ contract ApeRewardPoolFactory is Ownable {
         return allPools.length;
     }
 
-    // TEST: manually
     /// @dev Anyone can create a pool if they pay a fee in the required feeToken
     /// @notice msg.sender needs to approve this contract to transfer the feeToken
     function createPool(
@@ -71,8 +69,6 @@ contract ApeRewardPoolFactory is Ownable {
         uint256 startBlock,
         uint256 endBlock
     ) external returns (address) {
-        // TEST: verfiy that the stake token is an ApePair contract, feeToken or whitelist
-        // feeToken staking is allowed 
         if (stakeToken != address(feeToken)) {
             // If not feeToken, check if stakeToken is whitelisted or the correct LP token
             require(
@@ -179,8 +175,7 @@ contract ApeRewardPoolFactory is Ownable {
     /// @dev Send the feeAmount (if any) of feeToken to the burn address 
     function burnFee() internal {
         if(feeAmount == 0) return;
-        // TEST: that the burn works
-        feeToken.transferFrom(msg.sender, burnAddress, feeAmount);
+        feeToken.safeTransferFrom(msg.sender, burnAddress, feeAmount);
         emit BurnFee(feeAmount);
     }
 
