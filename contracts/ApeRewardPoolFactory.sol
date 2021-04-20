@@ -103,20 +103,25 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
     }
 
     /// @dev Creates a new pool contract and captures the address for referencing
+    /// @param stakeToken address of the stake token
+    /// @param rewardToken address of the reward token
+    /// @param startBlock the starting block of the pool. If 0, the startBlock will be the current block
+    /// @param endBlock the block when rewards should end.
     function createPoolInternal(
         address stakeToken,
         address rewardToken,
         uint256 startBlock,
         uint256 endBlock
     ) internal returns (address) {
+        uint256 adjustedStartBlock = startBlock == 0 ? block.number : startBlock;
         // verify inputs
         require(
-            startBlock > block.number,
+            adjustedStartBlock >= block.number,
             "ApePoolFactory: startBlock must be greater than block.now"
         );
         require(
-            endBlock > startBlock,
-            "ApePoolFactory: endBlock must be greather than endBlock"
+            endBlock > adjustedStartBlock,
+            "ApePoolFactory: endBlock must be greather than startBlock"
         );
         require(
             stakeToken != address(0),
@@ -124,7 +129,6 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
         );
         // If reward token is address(0) then it will reward BNB
         if (rewardToken != address(0)) {
-            // TEST: revert? non-ERC-20 by calling .totalSupply()
             /// @dev verify that the reward token is a BEP20 contract
             IBEP20(rewardToken).totalSupply();
         }
@@ -135,7 +139,7 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
         ApeRewardPool(pool).initialize(
             IBEP20(stakeToken),
             rewardToken,
-            startBlock,
+            adjustedStartBlock,
             endBlock
         );
 
