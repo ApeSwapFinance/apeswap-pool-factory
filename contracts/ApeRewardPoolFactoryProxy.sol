@@ -13,7 +13,7 @@ pragma solidity ^0.8.3;
 
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-contract LotteryUpgradeProxy is TransparentUpgradeableProxy {
+contract ApeRewardPoolFactoryProxy is TransparentUpgradeableProxy {
 
     constructor(address logic, address admin, bytes memory data) TransparentUpgradeableProxy(logic, admin, data) {
 

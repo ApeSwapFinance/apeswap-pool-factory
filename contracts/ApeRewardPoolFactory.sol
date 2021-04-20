@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./InitOwnable.sol";
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/IApePair.sol";
 import "./BEP20/IBEP20.sol";
 import "./ApeRewardPool.sol";
 
-contract ApeRewardPoolFactory is Ownable, Initializable {
+contract ApeRewardPoolFactory is InitOwnable, Initializable {
     using SafeERC20 for IBEP20;
 
     bytes32 public constant INIT_CODE_PAIR_HASH =
@@ -54,10 +54,12 @@ contract ApeRewardPoolFactory is Ownable, Initializable {
 
 
     function initialize(
+        address ownerIn,
         address apePairFactoryIn,
         IBEP20 feeTokenIn,
         uint256 feeAmountIn
     ) public initializer {
+        initOwnershipInternal(ownerIn);
         apePairFactory = apePairFactoryIn;
         feeToken = feeTokenIn;
         feeAmount = feeAmountIn;
