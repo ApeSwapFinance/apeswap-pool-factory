@@ -1,3 +1,6 @@
+# VSCode 
+.vscode/settings.json
+
 node_modules
 
 # Logs
