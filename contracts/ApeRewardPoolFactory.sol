@@ -3,11 +3,12 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/IApePair.sol";
 import "./BEP20/IBEP20.sol";
 import "./ApeRewardPool.sol";
 
-contract ApeRewardPoolFactory is Ownable {
+contract ApeRewardPoolFactory is Ownable, Initializable {
     using SafeERC20 for IBEP20;
 
     bytes32 public constant INIT_CODE_PAIR_HASH =
@@ -44,13 +45,19 @@ contract ApeRewardPoolFactory is Ownable {
         address pool,
         uint256 numPools
     );
+    event UpdateFee(uint256 previousFeeAmount, uint256 newFeeAmount);
+    event UpdateWhitelist(address indexed stakeToken, bool newWhitelistSetting);
     event BurnFee(uint256 feeAmount);
+    event TransferApePairFactory(address indexed previousApePairFactory, address indexed newApePairFactory);
+    event TransferFeeToken(IBEP20 indexed previousFeeToken, IBEP20 indexed newFeeToken);
 
-    constructor(
+
+
+    function initialize(
         address apePairFactoryIn,
         IBEP20 feeTokenIn,
         uint256 feeAmountIn
-    ) {
+    ) public initializer {
         apePairFactory = apePairFactoryIn;
         feeToken = feeTokenIn;
         feeAmount = feeAmountIn;
@@ -77,7 +84,7 @@ contract ApeRewardPoolFactory is Ownable {
                 "ApePoolFactory: invalid stake token."
             );
         }
-        burnFee();
+        burnFeeInternal();
         return
             createPoolInternal(stakeToken, rewardToken, startBlock, endBlock);
     }
@@ -173,7 +180,7 @@ contract ApeRewardPoolFactory is Ownable {
     }
 
     /// @dev Send the feeAmount (if any) of feeToken to the burn address 
-    function burnFee() internal {
+    function burnFeeInternal() internal {
         if(feeAmount == 0) return;
         feeToken.safeTransferFrom(msg.sender, burnAddress, feeAmount);
         emit BurnFee(feeAmount);
@@ -183,23 +190,30 @@ contract ApeRewardPoolFactory is Ownable {
 
     /// @dev Set the fee amount in feeToken decimals
     function setFee(uint256 newFeeAmount) external onlyOwner {
+        uint256 previousFeeAmount = feeAmount;
         feeAmount = newFeeAmount;
+        emit UpdateFee(previousFeeAmount, feeAmount);
     }
 
     /// @dev Set the BEP20 feeToken
     function setFeeToken(IBEP20 newFeeToken) external onlyOwner {
         // TEST: that this check works by testing if it's a BEP20
         newFeeToken.totalSupply();
+        IBEP20 previousFeeToken = feeToken;
         feeToken = newFeeToken;
+        emit TransferFeeToken(previousFeeToken, feeToken);
     }
 
     /// @dev Set the apePairFactory address
     function setApePairFactory(address newApePairFactory) external onlyOwner {
+        address previousApePairFactory = apePairFactory;
         apePairFactory = newApePairFactory;
+        emit TransferApePairFactory(previousApePairFactory, apePairFactory);
     }
 
     /// @dev Set whitelist status for a stake token
     function setWhitelistForStakeToken(address stakeToken, bool newWhitelistSetting) external onlyOwner {
         stakeTokenWhitelist[stakeToken] = newWhitelistSetting;
+        emit UpdateWhitelist(stakeToken, newWhitelistSetting);
     }
 }
