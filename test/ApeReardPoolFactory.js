@@ -48,7 +48,8 @@ contract('ApeReardPoolFactory', async ([alice, bob, admin, dev, minter]) => {
     // address apePairFactoryIn,
     // IBEP20 feeTokenIn,
     // uint256 feeAmountIn
-    this.apeRewardPoolFactory = await ApeRewardPoolFactory.new(
+    this.apeRewardPoolFactory = await ApeRewardPoolFactory.new({ from: minter });
+    await this.apeRewardPoolFactory.initialize(
       apePairFactory,
       this.feeToken.address,
       '5000000000000000000000', // 5000
