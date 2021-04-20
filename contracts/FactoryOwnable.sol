@@ -31,7 +31,6 @@ abstract contract FactoryOwnable is Context {
      */
     constructor () {
         address msgSender = _msgSender();
-        // TEST: Test that this is the address creating this is the factory
         _factory = IOwnable(msgSender);
         emit FactoryTransferred(address(0), msgSender);
     }
@@ -47,7 +46,6 @@ abstract contract FactoryOwnable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyFactoryOwner() {
-        // TEST: That this function works
         require(factory().owner() == _msgSender(), "FactoryOwnable: caller is not the factory owner");
         _;
     }

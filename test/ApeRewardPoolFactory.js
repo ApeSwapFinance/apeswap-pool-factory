@@ -4,8 +4,6 @@ const ApeRewardPoolFactory = artifacts.require('ApeRewardPoolFactory');
 const ApeRewardPool = artifacts.require('ApeRewardPool');
 const MockBEP20 = artifacts.require('libs/MockBEP20');
 
-// NOTE: 
-// TEST: 
 // async function time.advanceBlockTo(target)
 // Forces blocks to be mined until the the target block height is reached.
 
