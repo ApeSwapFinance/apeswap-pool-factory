@@ -127,7 +127,7 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
         // verify inputs
         require(
             adjustedStartBlock >= block.number,
-            "ApePoolFactory: startBlock must be greater than block.now"
+            "ApePoolFactory: startBlock must be greater than block.number"
         );
         require(
             endBlock > adjustedStartBlock,
@@ -190,9 +190,14 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
         return poolsOfRewardToken[rewardToken];
     }
 
-    /// @dev Help function to get a block in the future from the current block
+    /// @dev Helper function to get a block in the future from the current block
     function getBlockFromCurrent(uint256 offset) external view returns (uint256) {
         return block.number + offset;
+    }
+
+    /// @dev Helper function to get address(0) for creating BNB pools
+    function getAddressZero() external pure returns (address) {
+        return address(0);
     }
 
     /// @dev Send the feeAmount (if any) of feeToken to the burn address 
