@@ -218,7 +218,6 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
 
     /// @dev Set the BEP20 feeToken
     function setFeeToken(IBEP20 newFeeToken) external onlyOwner {
-        // TEST: that this check works by testing if it's a BEP20
         newFeeToken.totalSupply();
         IBEP20 previousFeeToken = feeToken;
         feeToken = newFeeToken;
