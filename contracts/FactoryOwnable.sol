@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
+
+/*
+ * ApeSwapFinance 
+ * App:             https://apeswap.finance
+ * Medium:          https://ape-swap.medium.com    
+ * Twitter:         https://twitter.com/ape_swap 
+ * Telegram:        https://t.me/ape_swap
+ * Announcements:   https://t.me/ape_swap_news
+ * GitHub:          https://github.com/ApeSwapFinance
+ */
 
 import "@openzeppelin/contracts/utils/Context.sol";
 
@@ -31,7 +40,6 @@ abstract contract FactoryOwnable is Context {
      */
     constructor () {
         address msgSender = _msgSender();
-        // TEST: Test that this is the address creating this is the factory
         _factory = IOwnable(msgSender);
         emit FactoryTransferred(address(0), msgSender);
     }
@@ -47,7 +55,6 @@ abstract contract FactoryOwnable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyFactoryOwner() {
-        // TEST: That this function works
         require(factory().owner() == _msgSender(), "FactoryOwnable: caller is not the factory owner");
         _;
     }
