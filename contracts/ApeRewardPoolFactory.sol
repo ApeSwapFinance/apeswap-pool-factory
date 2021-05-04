@@ -37,6 +37,7 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
     address constant burnAddress =
         address(0x000000000000000000000000000000000000dEaD);
 
+    // TODO: create a mapping that maps admins to pools when admin addresses are passed in
     // array of stake tokens used in pools created by this factory
     address[] stakeTokens;
     // mappping to an array of pools that use a specific stake token
@@ -148,9 +149,10 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
         // initalize the pool
         ApeRewardPool(pool).initialize(
             IBEP20(stakeToken),
-            rewardToken,
+            IBEP20(rewardToken),
             adjustedStartBlock,
-            endBlock
+            endBlock,
+            msg.sender
         );
 
         // add references
@@ -232,6 +234,7 @@ contract ApeRewardPoolFactory is InitOwnable, Initializable {
     }
 
     /// @dev Set whitelist status for a stake token
+    // TODO: take an array of addresses to easily whitelist and de-whitelist multiple addresses
     function setWhitelistForStakeToken(address stakeToken, bool newWhitelistSetting) external onlyOwner {
         stakeTokenWhitelist[stakeToken] = newWhitelistSetting;
         emit UpdateWhitelist(stakeToken, newWhitelistSetting);
