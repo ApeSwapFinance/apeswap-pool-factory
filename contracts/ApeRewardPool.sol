@@ -169,7 +169,6 @@ contract ApeRewardPool is Initializable, InitOwnable {
 
     /// @dev Transfers pending rewards to address
     /// @notice This function does not do important updates to save on gas:
-    ///  - update the pool before hand 
     ///  - update the users rewardDebt afterward 
     function harvestInternal(address _toHarvest) internal {
         updatePool(0);
