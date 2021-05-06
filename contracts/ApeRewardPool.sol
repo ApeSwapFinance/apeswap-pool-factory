@@ -343,13 +343,11 @@ contract ApeRewardPool is Initializable, InitOwnable {
         require(_amount > 0, 'Deposit value must be greater than 0.');
         rewardBalance = rewardBalance.add(_amount);
         IBEP20(rewardToken).safeTransferFrom(address(msg.sender), address(this), _amount);
-        if(extendEndBlock){
+        if(extendEndBlock && rewardPerBlock > 0){
             uint256 additionalBlocks = _amount.div(rewardPerBlock);
             bonusEndBlock = bonusEndBlock.add(additionalBlocks);
-            updateRewardPerBlockInternal();
-        } else {
-            updateRewardPerBlockInternal();
         }
+        updateRewardPerBlockInternal();
         emit DepositRewards(_amount);
     }
 
@@ -358,13 +356,12 @@ contract ApeRewardPool is Initializable, InitOwnable {
         require(isBNBRewardPool, 'Cannot deposit BNB rewards into a BEP20 reward pool');
         require(msg.value > 0, 'Message has no BNB value to deposit into contract.');
         rewardBalance = rewardBalance.add(msg.value);
-        if(extendEndBlock){
+        if(extendEndBlock && rewardPerBlock > 0){
             uint256 additionalBlocks = msg.value.div(rewardPerBlock);
             bonusEndBlock = bonusEndBlock.add(additionalBlocks);
-            updateRewardPerBlockInternal();
-        } else {
-            updateRewardPerBlockInternal();
-        }
+        } 
+        updateRewardPerBlockInternal();
+
         emit DepositRewards(msg.value);
     }
 
