@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 /*
  * ApeSwapFinance 
@@ -14,10 +14,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import './InitOwnable.sol';
 import './BEP20/IBEP20.sol';
 
-contract ApeRewardPool is Initializable, InitOwnable {
+contract ApeRewardPool is Initializable, InitOwnable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IBEP20;
 
@@ -157,7 +158,7 @@ contract ApeRewardPool is Initializable, InitOwnable {
     }
 
     /// @dev Harvest currently earned rewards
-    function harvest() external {
+    function harvest() external nonReentrant {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         harvestInternal(msg.sender);
@@ -195,7 +196,7 @@ contract ApeRewardPool is Initializable, InitOwnable {
     /// @dev Since this contract needs to be supplied with rewards we are 
     ///  sending the balance of the contract if the pending rewards are higher
     /// @param _amount The amount of staking tokens to deposit
-    function deposit(uint256 _amount) external {
+    function deposit(uint256 _amount) external nonReentrant {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         // Harvest senders rewards before their reward debt is updated below.
@@ -203,14 +204,14 @@ contract ApeRewardPool is Initializable, InitOwnable {
         // Deposit stake tokens
         uint256 finalDepositAmount = 0;
         if(_amount > 0) {
-            uint256 preStakeBalance = totalStakeTokenBalance();
+            uint256 preStakeBalance = balanceOfStakeToken();
             stakeToken.safeTransferFrom(address(msg.sender), address(this), _amount);
             if (userInfo[msg.sender].rewardDebt == 0) {
                 addressList.push(address(msg.sender));
             }
             // Reflect tokens may remove a portion of the transfer for fees. This ensures only the
             //  amount deposited into the contract counds for staking
-            finalDepositAmount = totalStakeTokenBalance().sub(preStakeBalance);
+            finalDepositAmount = balanceOfStakeToken().sub(preStakeBalance);
             totalStaked = totalStaked.add(finalDepositAmount);
             user.amount = user.amount.add(finalDepositAmount);
         }
@@ -223,7 +224,7 @@ contract ApeRewardPool is Initializable, InitOwnable {
 
     /// Withdraw rewards and/or staked tokens. Pass a 0 amount to withdraw only rewards 
     /// @param _amount The amount of staking tokens to withdraw
-    function withdraw(uint256 _amount) external {
+    function withdraw(uint256 _amount) external nonReentrant {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -275,14 +276,14 @@ contract ApeRewardPool is Initializable, InitOwnable {
 
     /// @dev Obtain number of reward tokens in this contract
     /// @return wei balace of contract
-    function totalRewardTokenBalance() public view returns (uint256) {
+    function balanceOfRewardToken() public view returns (uint256) {
         // Return BEO20 balance
         return rewardToken.balanceOf(address(this));
     }
 
     /// @dev Obtain number of stake tokens in this contract
     /// @return wei balace of contract
-    function totalStakeTokenBalance() public view returns (uint256) {
+    function balanceOfStakeToken() public view returns (uint256) {
         // Return BEO20 balance
         return stakeToken.balanceOf(address(this));
     }
@@ -307,22 +308,20 @@ contract ApeRewardPool is Initializable, InitOwnable {
     /// @dev Obtain the reward token fees (if any) earned by reflect token
     function getRewardTokenFeeBalance() public view returns (uint256) {
         if(isSameTokenPool()) {
-            // TODO: Is there a way we can calculate this easier?
-            // NOTE: If both tokens are reflect tokens then this is difficult
-            return 0;
+            // If the tokens are the same, then the combined balance will be returned
+            return balanceOfRewardToken().sub(rewardBalance).sub(totalStaked);
         } else {
-            return totalRewardTokenBalance().sub(rewardBalance);
+            return balanceOfRewardToken().sub(rewardBalance);
         }
     }
 
     /// @dev Obtain the stake token fees (if any) earned by reflect token
     function getStakeTokenFeeBalance() public view returns (uint256) {
         if(isSameTokenPool()) {
-            // TODO: Is there a way we can calculate this easier?
-            // NOTE: If both tokens are reflect tokens then this is difficult
-            return 0;
+            // If the tokens are the same, then the combined balance will be returned
+            return balanceOfStakeToken().sub(totalStaked).sub(rewardBalance);
         } else {
-            return totalStakeTokenBalance().sub(totalStaked);
+            return balanceOfStakeToken().sub(totalStaked);
         }
     }
 
@@ -408,14 +407,6 @@ contract ApeRewardPool is Initializable, InitOwnable {
         emit EmergencyWithdraw(msg.sender, user.amount);
     }
 
-    // TODO: Remove function?
-    /// @dev Withdraw reward. EMERGENCY ONLY.
-    function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
-        require(_amount <= rewardBalance, 'not enough rewards');
-        // Withdraw rewards
-        safeTransferRewardInternal(address(msg.sender), _amount);
-        emit EmergencyRewardWithdraw(msg.sender, _amount);
-    }
 
     /// @dev Remove excess reward tokens earned by reflect fees
     function skimRewardTokenFees() external onlyOwner {
