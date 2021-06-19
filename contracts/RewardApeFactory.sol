@@ -34,7 +34,7 @@ contract RewardApeFactory {
         IERC20 _rewardToken,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
-        uint256 _bonusEndBlock, 
+        uint256 _bonusEndBlock,
         address _owner) public {
     BEP20RewardApeV3 pool = new BEP20RewardApeV3();
 
@@ -49,7 +49,7 @@ contract RewardApeFactory {
         IERC20 _stakeToken,
         IERC20 _rewardToken,
         uint256 _startBlock,
-        uint256 _blocksDuration, 
+        uint256 _blocksDuration,
         uint256 _totalRewards,
         address _owner) public {
     (uint256 rewardPerBlock, uint256 bonusEndBlock) = calculatedConfig(_totalRewards, _startBlock, _blocksDuration);
@@ -60,7 +60,7 @@ contract RewardApeFactory {
     uint256 _totalRewards,
     uint256 _startBlock,
     uint256 _blocksDuration) public pure returns (uint256 rewardsPerBlock, uint256 bonusEndBlock) {
-    
+
     rewardsPerBlock = _totalRewards / _blocksDuration;
     bonusEndBlock = _startBlock + _blocksDuration;
 

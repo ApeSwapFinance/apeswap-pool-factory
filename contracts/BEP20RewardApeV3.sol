@@ -60,6 +60,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event SkimStakeTokenFees(address indexed user, uint256 amount);
+    event LogUpdatePool(uint256 bonusEndBlock, uint256 rewardPerBlock);
     event EmergencyRewardWithdraw(address indexed user, uint256 amount);
     event EmergencySweepWithdraw(address indexed user, IERC20 indexed token, uint256 amount);
 
@@ -91,7 +92,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
     // Return reward multiplier over the given _from to _to block.
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
         if (_to <= bonusEndBlock) {
-            return _to - _from; 
+            return _to - _from;
         } else if (_from >= bonusEndBlock) {
             return 0;
         } else {
@@ -103,6 +104,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
     function setBonusEndBlock(uint256 _bonusEndBlock) external onlyOwner {
         require(_bonusEndBlock > bonusEndBlock, 'new bonus end block must be greater than current');
         bonusEndBlock = _bonusEndBlock;
+        emit LogUpdatePool(bonusEndBlock, rewardPerBlock);
     }
 
     // View function to see pending Reward on frontend.
@@ -112,7 +114,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
         if (block.number > poolInfo.lastRewardBlock && totalStaked != 0) {
             uint256 multiplier = getMultiplier(poolInfo.lastRewardBlock, block.number);
             uint256 tokenReward = multiplier * rewardPerBlock * poolInfo.allocPoint / totalAllocPoint;
-            accRewardTokenPerShare = accRewardTokenPerShare + (tokenReward * 1e30  / totalStaked);
+            accRewardTokenPerShare = accRewardTokenPerShare + (tokenReward * 1e30 / totalStaked);
         }
         return user.amount * accRewardTokenPerShare / 1e30 - user.rewardDebt;
     }
@@ -233,6 +235,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
     /// @param _rewardPerBlock The amount of reward tokens to be given per block
     function setRewardPerBlock(uint256 _rewardPerBlock) external onlyOwner {
         rewardPerBlock = _rewardPerBlock;
+        emit LogUpdatePool(bonusEndBlock, rewardPerBlock);
     }
 
         /// @dev Remove excess stake tokens earned by reflect fees
@@ -262,7 +265,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
         emit EmergencyRewardWithdraw(msg.sender, _amount);
     }
 
-    /// @notice A public function to sweep accidental BEP20 transfers to this contract. 
+    /// @notice A public function to sweep accidental BEP20 transfers to this contract.
     ///   Tokens are sent to owner
     /// @param token The address of the BEP20 token to sweep
     function sweepToken(IERC20 token) external onlyOwner {
