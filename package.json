@@ -8,7 +8,7 @@
     "test": "truffle test",
     "compile": "truffle compile",
     "migrate:testnet": "truffle migrate --network testnet --reset",
-    "verify:testnet": "truffle run verify RewardApeFactory --network testnet",
+    "verify:testnet": "truffle run verify BEP20RewardApeBurn --network testnet",
     "migrate:bsc": "truffle migrate --network bsc"
   },
   "author": "DeFiFoFum",
