@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "./BEP20RewardApeBurn.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract RewardApeFactory {
+contract BurnRewardApeFactory {
   address public defaultOwner;
 
   event DeployedPoolContract(
