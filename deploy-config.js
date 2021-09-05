@@ -4,7 +4,7 @@ function getNetworkConfig(network, accounts) {
         console.log(`Deploying with BSC MAINNET config.`)
         return {
             factoryAdmin: '0x6c905b4108A87499CEd1E0498721F2B831c6Ab13', // ApeSwap General Admin
-            proxyAdmin: '0xf81A0Ee9BB9606e375aeff30364FfA17Bb8a7FD1', // 
+            proxyAdmin: '0xf81A0Ee9BB9606e375aeff30364FfA17Bb8a7FD1', // General Proxy Admin 
             apePairFactory: '0x0841BD0B734E4F5853f0dD8d7Ea041c241fb0Da6', // Ape Factory
             feeToken: '0x603c7f932ED1fc6575303D8Fb018fDCBb0f39a95', // BANANA
             feeAmount: '10000000000000000000000', // 10,000 
