@@ -18,6 +18,7 @@ import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import './InitOwnable.sol';
 import './BEP20/IBEP20.sol';
 
+// TODO: Change "BNB" to "Native" 
 contract ApeRewardPool is Initializable, InitOwnable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IBEP20;
@@ -274,11 +275,16 @@ contract ApeRewardPool is Initializable, InitOwnable, ReentrancyGuard {
         }
     }
 
+    // TEST BNB balance
     /// @dev Obtain number of reward tokens in this contract
     /// @return wei balace of contract
     function balanceOfRewardToken() public view returns (uint256) {
-        // Return BEO20 balance
-        return rewardToken.balanceOf(address(this));
+        if(isBNBRewardPool) {
+            return address(this).balance;
+        } else {
+            // Return BEP20 balance
+            return rewardToken.balanceOf(address(this));
+        }
     }
 
     /// @dev Obtain number of stake tokens in this contract

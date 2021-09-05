@@ -46,5 +46,4 @@ module.exports = async function (deployer, network, accounts) {
   await deployer.deploy(ApeRewardPoolFactoryProxy, ApeRewardPoolFactory.address, proxyAdmin, abiEncodeData);
 
   await ApeRewardPoolFactory.at(ApeRewardPoolFactoryProxy.address);
-
 };
