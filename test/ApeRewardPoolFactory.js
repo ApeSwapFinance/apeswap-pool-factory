@@ -226,7 +226,7 @@ contract('ApeReardPoolFactory', async ([alice, bob, admin, dev, minter]) => {
     const snapshotB = await getPoolSnapshot(BEP20RewardPool);
     await evaluateSnapshots(snapshotA, snapshotB);
     await BEP20RewardPool.withdraw( ether('1'), { from: alice });
-    await getUserSnapshot(BEP20RewardPool, alice);
+    // await getUserSnapshot(BEP20RewardPool, alice);
     await getPoolSnapshot(BEP20RewardPool);
 
 

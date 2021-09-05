@@ -4,7 +4,7 @@ const deployConfigs = [
   {
     stakeToken: '0x0491648C910ad2c1aFaab733faF71D30313Df7FC', 
     rewardToken: '0x0491648C910ad2c1aFaab733faF71D30313Df7FC',
-    startBlock: '7755906',
+    startBlock: '0',
     bonusEndBlock: '11390295' 
   },
 ]

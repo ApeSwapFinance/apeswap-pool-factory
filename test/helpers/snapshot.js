@@ -3,11 +3,18 @@ const { BN } = require("@openzeppelin/test-helpers");
 async function getUserSnapshot(rewardPoolContract, userAddress) {
   await rewardPoolContract.updatePool(0);
   const { amount, rewardDebt } = await rewardPoolContract.userInfo(userAddress);
+  const pendingReward = await rewardPoolContract.pendingReward(userAddress);
 
-  // TODO: add pendingReward(user)
+  const userSnapshot = {
+    amount: amount.toString(),
+    rewardDebt: rewardDebt.toString(),
+    pendingReward: pendingReward.toString(),
+  };
 
   // FIXME: log
-  console.log({ amount: amount.toString(), rewardDebt: rewardDebt.toString() });
+  console.dir(userSnapshot);
+
+  return userSnapshot;
 }
 
 async function getPoolSnapshot(rewardPoolContract) {
@@ -16,8 +23,8 @@ async function getPoolSnapshot(rewardPoolContract) {
   const snapshotFunctions = [
     "rewardPerBlock",
     "totalStaked",
-    "totalStakeTokenBalance",
-    "rewardsLeftToPay",
+    "balanceOfRewardToken",
+    "balanceOfStakeToken",
     "rewardsLeftToPay",
     "availableRewards",
     "getNextRewardBlock",
