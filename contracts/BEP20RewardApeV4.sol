@@ -45,6 +45,8 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     uint256 public totalStaked = 0;
     // Keep track of number of reward tokens paid to find remaining reward balance
     uint256 public totalRewardsPaid = 0;
+    // Keep track of number of reward tokens paid to find remaining reward balance
+    uint256 public totalRewardsAllocated = 0;
 
     // Info of each pool.
     PoolInfo public poolInfo;
@@ -104,7 +106,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     /// @param  _bonusEndBlock The block when rewards will end
     function setBonusEndBlock(uint256 _bonusEndBlock) external onlyOwner {
-        require(_bonusEndBlock > bonusEndBlock, 'new bonus end block must be greater than current');
+        require(_bonusEndBlock > block.number, 'new bonus end block must be greater than current');
         bonusEndBlock = _bonusEndBlock;
         emit LogUpdatePool(bonusEndBlock, rewardPerBlock);
     }
@@ -132,6 +134,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         }
         uint256 multiplier = getMultiplier(poolInfo.lastRewardBlock, block.number);
         uint256 tokenReward = multiplier * rewardPerBlock * poolInfo.allocPoint / totalAllocPoint;
+        totalRewardsAllocated += tokenReward;
         poolInfo.accRewardTokenPerShare = poolInfo.accRewardTokenPerShare + (tokenReward * 1e30 / totalStaked);
         poolInfo.lastRewardBlock = block.number;
     }
@@ -205,6 +208,12 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         if (STAKE_TOKEN == REWARD_TOKEN)
             return balance - totalStaked;
         return balance;
+    }
+
+    /// Get the balance of rewards that have not been harvested
+    /// @return wei balance of rewards left to be paid
+    function getUnharvestedRewards() public view returns (uint256) {
+        return totalRewardsAllocated - totalRewardsPaid;
     }
 
     // Deposit Rewards into contract
