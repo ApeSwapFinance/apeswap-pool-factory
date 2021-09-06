@@ -43,6 +43,8 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     // Keep track of number of tokens staked in case the contract earns reflect fees
     uint256 public totalStaked = 0;
+    // Keep track of number of reward tokens paid to find remaining reward balance
+    uint256 public totalRewardsPaid = 0;
 
     // Info of each pool.
     PoolInfo public poolInfo;
@@ -149,9 +151,9 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
                 uint256 currentRewardBalance = rewardBalance();
                 if(currentRewardBalance > 0) {
                     if(pending > currentRewardBalance) {
-                        safeTransferReward(address(msg.sender), currentRewardBalance);
+                        safeTransferRewardInternal(address(msg.sender), currentRewardBalance);
                     } else {
-                        safeTransferReward(address(msg.sender), pending);
+                        safeTransferRewardInternal(address(msg.sender), pending);
                     }
                 }
             }
@@ -179,9 +181,9 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
             uint256 currentRewardBalance = rewardBalance();
             if(currentRewardBalance > 0) {
                 if(pending > currentRewardBalance) {
-                    safeTransferReward(address(msg.sender), currentRewardBalance);
+                    safeTransferRewardInternal(address(msg.sender), currentRewardBalance);
                 } else {
-                    safeTransferReward(address(msg.sender), pending);
+                    safeTransferRewardInternal(address(msg.sender), pending);
                 }
             }
         }
@@ -214,8 +216,9 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     /// @param _to address to send reward token to
     /// @param _amount value of reward token to transfer
-    function safeTransferReward(address _to, uint256 _amount) internal {
+    function safeTransferRewardInternal(address _to, uint256 _amount) internal {
         REWARD_TOKEN.safeTransfer(_to, _amount);
+        totalRewardsPaid += _amount;
     }
 
     /// @dev Obtain the stake balance of this contract
@@ -261,7 +264,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
         require(_amount <= rewardBalance(), 'not enough rewards');
         // Withdraw rewards
-        safeTransferReward(address(msg.sender), _amount);
+        safeTransferRewardInternal(address(msg.sender), _amount);
         emit EmergencyRewardWithdraw(msg.sender, _amount);
     }
 
