@@ -226,8 +226,8 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     /// @param _to address to send reward token to
     /// @param _amount value of reward token to transfer
     function safeTransferRewardInternal(address _to, uint256 _amount) internal {
-        REWARD_TOKEN.safeTransfer(_to, _amount);
         totalRewardsPaid += _amount;
+        REWARD_TOKEN.safeTransfer(_to, _amount);
     }
 
     /// @dev Obtain the stake balance of this contract
