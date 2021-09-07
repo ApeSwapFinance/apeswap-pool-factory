@@ -8,6 +8,8 @@ const MockBEP20 = contract.fromArtifact('MockBEP20');
 
 
 describe('BEP20RewardApeV4', async function () {
+    // NOTE: This is required because advanceBlockTo takes time
+    this.timeout(10000);
     const [minter, admin, alice, bob, carol] = accounts;
     // pass `this` to add the standard variables to each block
     async function setupPool(that, { fillPool } = { fillPool: true }) {
@@ -93,7 +95,7 @@ describe('BEP20RewardApeV4', async function () {
         it('should allow pool withdraw and transfer reward tokens', async () => {
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.endBlock);
             await this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: alice });
-            
+
             const rewardBalance = await this.rewardToken.balanceOf(alice);
             expect(rewardBalance).to.be.bignumber.equal(ether('10'));
         });
