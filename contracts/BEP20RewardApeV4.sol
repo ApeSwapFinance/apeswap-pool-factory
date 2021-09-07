@@ -151,16 +151,12 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         if (user.amount > 0) {
             uint256 pending = user.amount * poolInfo.accRewardTokenPerShare / 1e30 - user.rewardDebt;
             if(pending > 0) {
-                uint256 currentRewardBalance = rewardBalance();
-                if(currentRewardBalance > 0) {
-                    if(pending > currentRewardBalance) {
-                        safeTransferRewardInternal(address(msg.sender), currentRewardBalance);
-                    } else {
-                        safeTransferRewardInternal(address(msg.sender), pending);
-                    }
-                }
+                // If rewardBalance is low then revert to avoid losing the user's rewards
+                require(rewardBalance() >= pending, "insufficient reward balance");
+                safeTransferRewardInternal(address(msg.sender), pending);
             }
         }
+
         if (_amount > 0) {
             uint256 preStakeBalance = STAKE_TOKEN.balanceOf(address(this));
             poolInfo.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
@@ -181,15 +177,11 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         updatePool();
         uint256 pending = user.amount * poolInfo.accRewardTokenPerShare / 1e30 - user.rewardDebt;
         if(pending > 0) {
-            uint256 currentRewardBalance = rewardBalance();
-            if(currentRewardBalance > 0) {
-                if(pending > currentRewardBalance) {
-                    safeTransferRewardInternal(address(msg.sender), currentRewardBalance);
-                } else {
-                    safeTransferRewardInternal(address(msg.sender), pending);
-                }
-            }
+            // If rewardBalance is low then revert to avoid losing the user's rewards
+            require(rewardBalance() >= pending, "insufficient reward balance");
+            safeTransferRewardInternal(address(msg.sender), pending);
         }
+
         if(_amount > 0) {
             user.amount = user.amount - _amount;
             poolInfo.lpToken.safeTransfer(address(msg.sender), _amount);
@@ -205,8 +197,10 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     /// @return wei balace of conract
     function rewardBalance() public view returns (uint256) {
         uint256 balance = REWARD_TOKEN.balanceOf(address(this));
-        if (STAKE_TOKEN == REWARD_TOKEN)
+        if (STAKE_TOKEN == REWARD_TOKEN) {
             return balance - totalStaked;
+
+        }
         return balance;
     }
 
