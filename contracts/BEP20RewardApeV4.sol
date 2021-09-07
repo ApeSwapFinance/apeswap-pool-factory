@@ -199,7 +199,6 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         uint256 balance = REWARD_TOKEN.balanceOf(address(this));
         if (STAKE_TOKEN == REWARD_TOKEN) {
             return balance - totalStaked;
-
         }
         return balance;
     }
