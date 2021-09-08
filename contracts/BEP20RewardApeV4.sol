@@ -43,6 +43,10 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     // Keep track of number of tokens staked in case the contract earns reflect fees
     uint256 public totalStaked = 0;
+    // Keep track of number of reward tokens paid to find remaining reward balance
+    uint256 public totalRewardsPaid = 0;
+    // Keep track of number of reward tokens paid to find remaining reward balance
+    uint256 public totalRewardsAllocated = 0;
 
     // Info of each pool.
     PoolInfo public poolInfo;
@@ -102,7 +106,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     /// @param  _bonusEndBlock The block when rewards will end
     function setBonusEndBlock(uint256 _bonusEndBlock) external onlyOwner {
-        require(_bonusEndBlock > bonusEndBlock, 'new bonus end block must be greater than current');
+        require(_bonusEndBlock > block.number, 'new bonus end block must be greater than current');
         bonusEndBlock = _bonusEndBlock;
         emit LogUpdatePool(bonusEndBlock, rewardPerBlock);
     }
@@ -130,6 +134,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         }
         uint256 multiplier = getMultiplier(poolInfo.lastRewardBlock, block.number);
         uint256 tokenReward = multiplier * rewardPerBlock * poolInfo.allocPoint / totalAllocPoint;
+        totalRewardsAllocated += tokenReward;
         poolInfo.accRewardTokenPerShare = poolInfo.accRewardTokenPerShare + (tokenReward * 1e30 / totalStaked);
         poolInfo.lastRewardBlock = block.number;
     }
@@ -146,16 +151,12 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         if (user.amount > 0) {
             uint256 pending = user.amount * poolInfo.accRewardTokenPerShare / 1e30 - user.rewardDebt;
             if(pending > 0) {
-                uint256 currentRewardBalance = rewardBalance();
-                if(currentRewardBalance > 0) {
-                    if(pending > currentRewardBalance) {
-                        safeTransferReward(address(msg.sender), currentRewardBalance);
-                    } else {
-                        safeTransferReward(address(msg.sender), pending);
-                    }
-                }
+                // If rewardBalance is low then revert to avoid losing the user's rewards
+                require(rewardBalance() >= pending, "insufficient reward balance");
+                safeTransferRewardInternal(address(msg.sender), pending);
             }
         }
+
         if (_amount > 0) {
             uint256 preStakeBalance = STAKE_TOKEN.balanceOf(address(this));
             poolInfo.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
@@ -176,15 +177,11 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
         updatePool();
         uint256 pending = user.amount * poolInfo.accRewardTokenPerShare / 1e30 - user.rewardDebt;
         if(pending > 0) {
-            uint256 currentRewardBalance = rewardBalance();
-            if(currentRewardBalance > 0) {
-                if(pending > currentRewardBalance) {
-                    safeTransferReward(address(msg.sender), currentRewardBalance);
-                } else {
-                    safeTransferReward(address(msg.sender), pending);
-                }
-            }
+            // If rewardBalance is low then revert to avoid losing the user's rewards
+            require(rewardBalance() >= pending, "insufficient reward balance");
+            safeTransferRewardInternal(address(msg.sender), pending);
         }
+
         if(_amount > 0) {
             user.amount = user.amount - _amount;
             poolInfo.lpToken.safeTransfer(address(msg.sender), _amount);
@@ -200,9 +197,16 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     /// @return wei balace of conract
     function rewardBalance() public view returns (uint256) {
         uint256 balance = REWARD_TOKEN.balanceOf(address(this));
-        if (STAKE_TOKEN == REWARD_TOKEN)
+        if (STAKE_TOKEN == REWARD_TOKEN) {
             return balance - totalStaked;
+        }
         return balance;
+    }
+
+    /// Get the balance of rewards that have not been harvested
+    /// @return wei balance of rewards left to be paid
+    function getUnharvestedRewards() public view returns (uint256) {
+        return totalRewardsAllocated - totalRewardsPaid;
     }
 
     // Deposit Rewards into contract
@@ -214,7 +218,8 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     /// @param _to address to send reward token to
     /// @param _amount value of reward token to transfer
-    function safeTransferReward(address _to, uint256 _amount) internal {
+    function safeTransferRewardInternal(address _to, uint256 _amount) internal {
+        totalRewardsPaid += _amount;
         REWARD_TOKEN.safeTransfer(_to, _amount);
     }
 
@@ -261,7 +266,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
         require(_amount <= rewardBalance(), 'not enough rewards');
         // Withdraw rewards
-        safeTransferReward(address(msg.sender), _amount);
+        safeTransferRewardInternal(address(msg.sender), _amount);
         emit EmergencyRewardWithdraw(msg.sender, _amount);
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./BEP20RewardApeV3.sol";
+import "./BEP20RewardApeV4.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract RewardApeFactory {
@@ -36,7 +36,7 @@ contract RewardApeFactory {
         uint256 _startBlock,
         uint256 _bonusEndBlock,
         address _owner) public {
-    BEP20RewardApeV3 pool = new BEP20RewardApeV3();
+    BEP20RewardApeV4 pool = new BEP20RewardApeV4();
 
     pool.initialize(_stakeToken, _rewardToken, _rewardPerBlock, _startBlock, _bonusEndBlock);
 
