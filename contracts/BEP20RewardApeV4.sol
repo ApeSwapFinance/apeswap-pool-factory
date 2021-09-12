@@ -15,8 +15,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract BEP20RewardApeV4 is Ownable, Initializable {
+contract BEP20RewardApeV4 is ReentrancyGuard, Ownable, Initializable {
     using SafeERC20 for IERC20;
 
     // Info of each user.
@@ -144,9 +145,8 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     /// @dev Since this contract needs to be supplied with rewards we are
     ///  sending the balance of the contract if the pending rewards are higher
     /// @param _amount The amount of staking tokens to deposit
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) public nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
-        uint256 finalDepositAmount = 0;
         updatePool();
         if (user.amount > 0) {
             uint256 pending = user.amount * poolInfo.accRewardTokenPerShare / 1e30 - user.rewardDebt;
@@ -157,6 +157,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
             }
         }
 
+        uint256 finalDepositAmount = 0;
         if (_amount > 0) {
             uint256 preStakeBalance = STAKE_TOKEN.balanceOf(address(this));
             poolInfo.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
@@ -171,7 +172,7 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
 
     /// Withdraw rewards and/or staked tokens. Pass a 0 amount to withdraw only rewards
     /// @param _amount The amount of staking tokens to withdraw
-    function withdraw(uint256 _amount) public {
+    function withdraw(uint256 _amount) public nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool();
@@ -231,8 +232,9 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     }
 
     /// @dev Obtain the stake token fees (if any) earned by reflect token
+    /// @notice If STAKE_TOKEN == REWARD_TOKEN there are no fees to skim
     function getStakeTokenFeeBalance() public view returns (uint256) {
-        return STAKE_TOKEN.balanceOf(address(this)) - totalStaked;
+        return totalStakeTokenBalance() - totalStaked;
     }
 
     /* Admin Functions */
@@ -244,16 +246,16 @@ contract BEP20RewardApeV4 is Ownable, Initializable {
     }
 
         /// @dev Remove excess stake tokens earned by reflect fees
-    function skimStakeTokenFees() external onlyOwner {
+    function skimStakeTokenFees(address _to) external onlyOwner {
         uint256 stakeTokenFeeBalance = getStakeTokenFeeBalance();
-        STAKE_TOKEN.safeTransfer(msg.sender, stakeTokenFeeBalance);
-        emit SkimStakeTokenFees(msg.sender, stakeTokenFeeBalance);
+        STAKE_TOKEN.safeTransfer(_to, stakeTokenFeeBalance);
+        emit SkimStakeTokenFees(_to, stakeTokenFeeBalance);
     }
 
     /* Emergency Functions */
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw() external {
+    function emergencyWithdraw() external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         poolInfo.lpToken.safeTransfer(address(msg.sender), user.amount);
         totalStaked = totalStaked - user.amount;
