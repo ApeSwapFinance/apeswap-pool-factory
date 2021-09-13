@@ -268,7 +268,7 @@ contract BEP20RewardApeV4 is ReentrancyGuard, Ownable, Initializable {
     function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
         require(_amount <= rewardBalance(), 'not enough rewards');
         // Withdraw rewards
-        safeTransferRewardInternal(address(msg.sender), _amount);
+        REWARD_TOKEN.safeTransfer(msg.sender, _amount);
         emit EmergencyRewardWithdraw(msg.sender, _amount);
     }
 
@@ -277,8 +277,9 @@ contract BEP20RewardApeV4 is ReentrancyGuard, Ownable, Initializable {
     /// @param token The address of the BEP20 token to sweep
     function sweepToken(IERC20 token) external onlyOwner {
         require(address(token) != address(STAKE_TOKEN), "can not sweep stake token");
+        require(address(token) != address(REWARD_TOKEN), "can not sweep reward token");
         uint256 balance = token.balanceOf(address(this));
-        token.transfer(msg.sender, balance);
+        token.safeTransfer(msg.sender, balance);
         emit EmergencySweepWithdraw(msg.sender, token, balance);
     }
 
