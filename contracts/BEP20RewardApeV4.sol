@@ -145,7 +145,7 @@ contract BEP20RewardApeV4 is ReentrancyGuard, Ownable, Initializable {
     /// @dev Since this contract needs to be supplied with rewards we are
     ///  sending the balance of the contract if the pending rewards are higher
     /// @param _amount The amount of staking tokens to deposit
-    function deposit(uint256 _amount) public nonReentrant {
+    function deposit(uint256 _amount) external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         if (user.amount > 0) {
@@ -172,7 +172,7 @@ contract BEP20RewardApeV4 is ReentrancyGuard, Ownable, Initializable {
 
     /// Withdraw rewards and/or staked tokens. Pass a 0 amount to withdraw only rewards
     /// @param _amount The amount of staking tokens to withdraw
-    function withdraw(uint256 _amount) public nonReentrant {
+    function withdraw(uint256 _amount) external nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool();
