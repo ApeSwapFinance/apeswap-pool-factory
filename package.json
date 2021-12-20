@@ -10,19 +10,25 @@
     "test-ci": "yarn test",
     "compile": "truffle compile",
     "migrate:testnet": "truffle migrate --network testnet --reset",
+    "migrate:bsc": "truffle migrate --network bsc",
     "verify:testnet": "truffle run verify RewardApeFactory --network testnet",
-    "migrate:bsc": "truffle migrate --network bsc"
+    "verify:bsc": "truffle run verify BEP20RewardApeV4 --network testnet",
+    "verify:bscc": "truffle run verify RewardApeFactory --network testnet && truffle run verify BEP20RewardApeV4 --network testnet"
   },
   "author": "DeFiFoFum",
   "license": "ISC",
   "devDependencies": {
     "@openzeppelin/test-environment": "^0.1.9",
     "@openzeppelin/test-helpers": "^0.5.10",
+    "axios": "^0.24.0",
     "chai": "^4.3.4",
     "dotenv": "^8.2.0",
+    "moment": "^2.29.1",
     "truffle": "^5.2.6",
     "truffle-hdwallet-provider": "^1.0.17",
-    "truffle-plugin-verify": "^0.5.7"
+    "truffle-plugin-verify": "^0.5.7",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.2.0",
