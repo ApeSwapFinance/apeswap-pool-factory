@@ -3,17 +3,16 @@ import { BN } from '@openzeppelin/test-helpers';
 import { getDefaultProvider } from 'ethers'
 import { Contract, PopulatedTransaction } from '@ethersproject/contracts'
 import { writeJSONToFile } from './utils/files'
-import { multicall, Call } from './utils/multicall';
+import { multicall, Call } from '@defifofum/multicall';
 import BEP20RewardApeV4Build from '../build/contracts/BEP20RewardApeV4.json'
-import MulticallBuild from '../build-apeswap/contracts/Multicall2.json'
 
 // NOTE: These files originate from 
 // https://github.com/ApeSwapFinance/apeswap-frontend/tree/main/src/config/constants 
 import pools from './constants/poolConfig';
 import tokens from './constants/tokens';
 
-const MULTICALL_ADDRESS = '0xC50F4c1E81c873B2204D7eFf7069Ffec6Fbe136D';
 const CHAIN_ID = 56;
+const RPC_PROVIDER = 'https://bsc-dataseed1.binance.org';
 
 (async function () {
     let poolAddresses = pools.reduce(function (filtered, pool) {
@@ -25,10 +24,6 @@ const CHAIN_ID = 56;
     }, []);
 
     console.log(poolAddresses)
-    const provider = getDefaultProvider('https://bsc-dataseed1.binance.org')
-    // setup contracts
-    const multicallContract = new Contract(MULTICALL_ADDRESS, MulticallBuild.abi, provider);
-
     // setup multicall
     const callDataArray: Call[] = [];
     for (const poolAddress of poolAddresses) {
@@ -38,17 +33,23 @@ const CHAIN_ID = 56;
             params: []
         });
     }
-    let feeData: { poolAddress: string; bscscanUrl: string; feeBalance: string }[] = [];
+    let feeData: { 
+        poolAddress: string; 
+        bscscanUrl: string; 
+        feeBalance: string;
+        tx: string;
+    }[] = [];
     // send multicall data
     if (callDataArray.length) {
-        const returnedData = await multicall(multicallContract, BEP20RewardApeV4Build.abi, callDataArray);
+        const returnedData = await multicall(RPC_PROVIDER, BEP20RewardApeV4Build.abi, callDataArray);
         // Pull addresses out of return data
         feeData = returnedData.map((dataArray, index) => {
             return {
                 poolAddress: poolAddresses[index],
                 bscscanUrl: `https://bscscan.com/address/${poolAddresses[index]}#readContract`,
                 // Values are returned as an array for each return value. We are pulling out the singular balance variable here
-                feeBalance: dataArray[0].toString()
+                feeBalance: dataArray[0].toString(),
+                tx: ''
             }
         });
     }
@@ -63,7 +64,8 @@ const CHAIN_ID = 56;
     }
 
     console.log(`Total pools: ${poolAddresses.length}.`);
-    console.log(`Total Fees: ${totalFees}.`);
+    console.log(`Total Fees Wei: ${totalFees}.`);
+    console.log(`Total Fees: ${(new BN(totalFees).div(new BN('1000000000000000000'))).toString()}.`);
     
 
 
