@@ -18,7 +18,7 @@
   "author": "DeFiFoFum",
   "license": "ISC",
   "devDependencies": {
-    "@defifofum/multicall": "^0.0.2",
+    "@defifofum/multicall": "1.0.4",
     "@openzeppelin/test-environment": "^0.1.9",
     "@openzeppelin/test-helpers": "^0.5.10",
     "axios": "^0.24.0",
