@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./BEP20RewardApeV4.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./BEP20RewardApeV4.sol";
+import "./interfaces/IPoolManager.sol";
 
-contract RewardApeFactory {
+contract RewardApeFactory is Ownable {
   address public defaultOwner;
+  IPoolManager public poolManager;
 
   event DeployedPoolContract(
       address indexed pool,
@@ -16,8 +19,9 @@ contract RewardApeFactory {
       uint256 bonusEndBlock,
       address owner);
 
-  constructor (address _defaultOwner) {
+  constructor (address _defaultOwner, IPoolManager _poolManager) {
     defaultOwner = _defaultOwner;
+    poolManager = _poolManager;
   }
 
   function deployDefaultPoolContract(
@@ -42,6 +46,8 @@ contract RewardApeFactory {
 
     pool.transferOwnership(_owner);
 
+    poolManager.addPool(address(pool), false);
+
     emit DeployedPoolContract(address(pool), address(_stakeToken), address(_rewardToken), _rewardPerBlock, _startBlock, _bonusEndBlock, _owner);
   }
 
@@ -65,6 +71,14 @@ contract RewardApeFactory {
     bonusEndBlock = _startBlock + _blocksDuration;
 
     return (rewardsPerBlock, bonusEndBlock);
+  }
+
+  function updateDeafultOwner(address _defaultOwner) public onlyOwner {
+    defaultOwner = _defaultOwner;
+  }
+
+  function updatePoolManager(IPoolManager _poolManager) public onlyOwner {
+    poolManager = _poolManager;
   }
 
 }
