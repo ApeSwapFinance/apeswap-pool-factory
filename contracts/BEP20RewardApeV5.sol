@@ -60,7 +60,7 @@ contract BEP20RewardApeV5 is ReentrancyGuard, Ownable, Initializable {
 	// The block number when mining ends.
     uint256 public bonusEndBlock;
 
-    event Deposit(address indexed user, uint256 amount);
+    event Deposit(address indexed sender, address indexed user, uint256 amount);
     event DepositRewards(uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
@@ -140,14 +140,20 @@ contract BEP20RewardApeV5 is ReentrancyGuard, Ownable, Initializable {
         poolInfo.lastRewardBlock = block.number;
     }
 
-
     /// Deposit staking token into the contract to earn rewards.
     /// @dev Since this contract needs to be supplied with rewards we are
     ///  sending the balance of the contract if the pending rewards are higher
     /// @param _amount The amount of staking tokens to deposit
-    function deposit(uint256 _amount, address _user) external nonReentrant {
-        require(_user != address(0), "Can't deposit for null address");
+    function deposit(uint256 _amount) external nonReentrant {
+        _depositTo(_amount, msg.sender);
+    }
 
+    function depositTo(uint256 _amount, address _user) external nonReentrant {
+        require(_user != address(0), "Can't deposit for null address");
+        _depositTo(_amount, _user);
+    }
+
+    function _depositTo(uint256 _amount, address _user) internal {
         UserInfo storage user = userInfo[_user];
         updatePool();
         if (user.amount > 0) {
@@ -169,7 +175,7 @@ contract BEP20RewardApeV5 is ReentrancyGuard, Ownable, Initializable {
         }
         user.rewardDebt = user.amount * poolInfo.accRewardTokenPerShare / 1e30;
 
-        emit Deposit(_user, finalDepositAmount);
+        emit Deposit(msg.sender, _user, finalDepositAmount);
     }
 
     /// Withdraw rewards and/or staked tokens. Pass a 0 amount to withdraw only rewards
