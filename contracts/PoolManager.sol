@@ -17,6 +17,7 @@ contract PoolManager is Authorizable {
     IERC20 public governanceToken;
 
     event AddPools(address[] pools, bool isLegacy);
+    event AddPool(address pool, bool isLegacy);
     event RemovePools(address[] pools, bool isLegacy);
     event GovernanceTokenChange(IERC20 newGovernanceToken);
 
@@ -38,6 +39,8 @@ contract PoolManager is Authorizable {
                 fullPoolList.add(_pool);
             }
         }
+
+        emit AddPool(_pool, _isLegacy);
     }
 
     function addPools(address[] calldata _pools, bool _isLegacy) public onlyAuthorized {

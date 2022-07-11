@@ -39,7 +39,7 @@ contract RewardApeFactory is Ownable {
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock,
-        address _owner) public {
+        address _owner) public onlyOwner {
     BEP20RewardApeV4 pool = new BEP20RewardApeV4();
 
     pool.initialize(_stakeToken, _rewardToken, _rewardPerBlock, _startBlock, _bonusEndBlock);
