@@ -79,8 +79,8 @@ describe('BEP20RewardApeV5', async function () {
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
 
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, alice, { from: alice })
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, bob, { from: bob });
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, alice, { from: alice })
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, bob, { from: bob });
 
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.startBlock + this.BLOCK_DIFF / 2)
         });
@@ -132,8 +132,8 @@ describe('BEP20RewardApeV5', async function () {
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
 
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, alice, { from: alice })
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, bob, { from: bob });
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, alice, { from: alice })
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, bob, { from: bob });
 
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.startBlock + this.BLOCK_DIFF / 2)
         });
@@ -196,8 +196,8 @@ describe('BEP20RewardApeV5', async function () {
         await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: alice })
         await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
 
-        await this.rewardApe.deposit(DEPOSIT_AMOUNT, carol, { from: alice });
-        await this.rewardApe.deposit(DEPOSIT_AMOUNT, carol, { from: bob });
+        await this.rewardApe.depositTo(DEPOSIT_AMOUNT, carol, { from: alice });
+        await this.rewardApe.depositTo(DEPOSIT_AMOUNT, carol, { from: bob });
 
         const userInfoCarol = await this.rewardApe.userInfo(carol);
         expect(userInfoCarol.amount).to.be.bignumber.equal(ether("200"));
