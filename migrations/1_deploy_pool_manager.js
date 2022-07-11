@@ -8,18 +8,21 @@ module.exports = async function(deployer, network, accounts) {
 
     const adminAddress = "0x6c905b4108a87499ced1e0498721f2b831c6ab13"
     const GNANA = "0xddb3bd8645775f59496c821e4f55a7ea6a6dc299";
-    const BANANA = "0x603c7f932ed1fc6575303d8fb018fdcbb0f39a95";
+    const BUSD = "0xe9e7cea3dedca5984780bafc599bd69add087d56";
 
     /*
-        Step 1: Deploy Pool Manager & Add all pools
+        Step 1: Deploy Pool Manager & Add authorized members
     */
 
-    // Deploy Pool Manager contract with GNANA as a governance token
     await deployer.deploy(PoolManager, GNANA);
     const poolManager = await PoolManager.at(PoolManager.address);
 
-    // Add the msg.sender as the first authorized account
     await poolManager.addAuthorized(accounts[0]);
+    await poolManager.addAuthorized(adminAddress);
+
+    /*
+        Step 2: Add All Pools
+    */
 
     // Add all non-legacy pools
     const pools = ["0x8F97B2E6559084CFaBA140e2AB4Da9aAF23FE7F8","0x0245c697a96045183048cdf18e9abae5b2237ff6","0x7336B60aC64a5Bf04Eec760bD135ea105994387C","0x726d5A4D170425C98BAff117BF3d9aF9f77f80bd","0x72C8750af0744282E065F0dF3F73460A3764c624","0x1900f5370830F0aa46DF76a6a4F0656Ef321b9f8","0xA007a5a8165D70DdFBC230927Cd639163228Fc72","0x834534853bff9C97F8A9b0fb9FFF864E3584Df99","0x8e6f61f855a7483E29c8E87BF221C73e10b49738","0x7618c42Fb5DC96F3C238FEC799B440AEd7c56E03","0x5798271B134e27c4dE28CB33aa8D18e5753e83fC","0xEdea59e33A6D0A2d491Aa818f6E08ea18DE13c32","0x6FbB19A87f1E86f027A084C8bfc3528120Cf8249","0xa3283C497710cbBE31d35A5cf56C315C621D6e10","0x1697b103a72299d5db4e39ef28a32991c347be23","0xd65f1319f6408C03EBA7f27e156391784492A9EF","0x7124d635a4bb82319acfd57ce9da18137a7a6f22","0x465a3782d9014e6eefccc21470c5e41b2cad9d6d","0xEedd7475Eb5D05D591bE0927B178AcBBdC5ee1c1","0x73775564d2cbad604c41d0b3ddf061e80e1d0279","0x48ee3f7748fac3e8e4858bd0b09483c4339d3d7e","0xe44d4786e9d367a475a0789dc618c76a2b2d05ec","0x4b5ee00fcce905cc2861c8255b368cf9f114c667","0x52634C2763a6DADA2028440d0892431b04809d88","0x1C62ac4D59FFACb35BFfcDb9fcd8b368a528B544","0x222c821620480f7482238dd3B71A7051d02c9624","0x73dAF9AfEBB271007167f3f0D140a35f5b1a7058","0xAC4409CC7709783c7CCEb6c6e69Fe42fAD192623","0x52F5f16F90B897AB9C2c7d3028FEF9e11B2BB485","0xfd9c606d3Ff6AC1b044C4F5C0A9Fa934634bD2e8","0x15C4200e694e4A0223191Ec717906CBA82F54745","0xc417D9D9b01b5985c1720cA89B963c2417821bdC","0x6D5A4371B0B658765D5282Ae64eFaf9e6f9A4600","0x19383690321291cb00de31ddec94f4596d504f5a","0x33a8CE49cFBdeF61e5E494f769b5626d395a56f3","0x1851a14b9b6bcd55b57da6bfd11f7fb5ae8c3d01","0x4fa77345de3d991625cbf3317cb449f729378d34","0x14e87345dd641a222a353d1fb0de5f0e66d0668e","0x49605d4d0bdf049a9c3f20f59e066662a086a9a8","0x98cb2265f54d8aed72ea78d207f068961f0630a4","0x92f5927fb750593b00ac933d296d9230d6f8b421","0xfa1e8344e8316b4c7ca4d9f9359154bd3b42b427","0x32d5dae00cf9ec718e6054cbe5f307b9e8ed80e9","0x2f70e1ab58231e1981915c1b3434144dcf26868f","0x5a10311f7d03a6e7ab464da54bdd535f3d4ce512","0x6e8cd8e267e4a8538b7119c3ca30ce04667070e5","0x063e98d9f0484c07028eb78661df554a064aeb05","0x2555190c9f515877ac88defc2242a4e91aa49021","0x0a509adf33e7094f3bd15c0062debd3aef2bce28","0x99dc608804adf5c5e9701b829fefbd618da14c5b","0xaffd843b548f70cc586cdecb2dd0e85be5349e96","0x82ee644a04573aebbfbf3d7fa98f20922a5c606a","0x51c58fb9a61c00e3e4cd09b499726ba1cd3dd261","0xE6C5DAfc5BAeb927Bc56B3a4154eDeCFDbB937d6","0x73d3d28cc018a89fe6518d7b5efbcfcf0695a0d9","0x44b7e5593dfc65208a2b68c3f6c1cffd881ef6fb","0x4632d4ff6312c9a00c6440c9271f0061aaa49a4b","0xade70b187429e3cf4a8dd476ecba8ce9002621ec","0x189aE88B8Df159BDB28260E86e87D770F2FC384D","0x64fc4bf63c4315156f56b953a42bf2459b227a68","0x03f344ceb868841ffa262503fe1cf21b9cd5d7a8","0x7ef515eac1cf68cde1bdbee2cda8707815e1a3c3","0x372c7b2c017aa055b6bd18b2d250b7dfc7593f5a","0xae6b44c1857d48512f1cebc0f2a55e02a751969c","0xbc2329abb85e0a3dc7e5bfd01901374bd4162831","0xa38e86fa40bff9a82bb0fdcca8002f34d08f64b9","0x8440870a806e73977c5f094376a5ac8e41d9db0b","0x68741f87120e158dd8b4e972c54a6b062d3958b9","0xc8fdda71305ff3001e84ef31f3f28460da4535ff","0x02f93496a75c430433a61f99c9d3f21278ee13d3","0xf45d14aa2844c14ee8a06a1bff1daa99656cf65c","0xcfaa62b60575c0808b24b2253e107fc8aa992ef4","0x68696e139a7bf935285ad7d0b590ccf66ba622ba","0x7740bb8f6be130e62597b2554aab2d69bc33c25b","0xda04ae1d4651e63c130921c6227397d58dd9167a","0x272d18f546CFF72D1a5bBcA9e0E25F97A71FcA1a","0x9ab78C2209ad2Bd50de93Aa449f1C7898DBf7138","0xb5bb4897cb8024281732c36d8a438aab5b11ef19","0x08b86811dcee75a37790dc28f3ad09776215ba7a","0x891e730df271d2c8da987651b9e7a4b9130f29b6","0x2179526cfc163afb6d6cba686f0540b699028350","0xdbb5df464f245d3b62b5fea995580f837f87fc12","0xa782cab148a3d33498e7f85b0491d4f364609c22","0x03643a66e0a121839d230364fab392aa583cb984","0xce12fb8d5e3f1acb469c8b9f657fd8188ca21e87","0x05db8d4a67d293b43aa1db8cf38850fe790dbf29","0x84cda09920232b5b138180b55759b218bf243645","0xac19462e8c9207cd1613292b93b5f7c65f1a597a","0xde182dad837db2117e2981b1f94dec2cec8191cc","0x502b015f0c4493e1e6414de471041347c58b0d97","0xc6215d86a4bb470667d54c316624a3c45504bc31","0x5d8b37C42c34CA1661dB227B5484726d89040702","0xc8ff8674a03672c36d6b5e2cbbf8f7967b14aef6","0x7b4459a0ce06f2ebb8b145add6620ae06ff225ed","0x946a0e7b410cfc4e225a3e9f09a93259747b0903","0x96034cd42b0eaa1a6dae20e1a13824aede3ba1f0","0x122365722070a9ca5d12040e511bb90f722b915c","0x3902e6220c8425dcfb86118413481c6a625b28ba","0x155bd20237a70994364723e44416fd602b8d0991","0x3c765c830a082944f4b69052670d41cf5b513846","0x96d643e487e408c59c10b654976567aa2f1a16d3","0xcf44a7c1d8277b27c47195f0907a5b93e63d3dd0","0xde99115c3f8ee876b5520779665088f70f647a6d"]
@@ -31,25 +34,28 @@ module.exports = async function(deployer, network, accounts) {
     await poolManager.addPools(["0x8F97B2E6559084CFaBA140e2AB4Da9aAF23FE7F8"], true);
 
     /*
-        Step 2: Deploy Pool Factory
+        Step 3: Deploy Pool Factory
     */
     await deployer.deploy(RewardApeFactory, adminAddress, PoolManager.address);
     const rewardApeFactory = await RewardApeFactory.at(RewardApeFactory.address);
     
     /*
-        Step 3: Give Pool Factory Permission on the Pool Manager
+        Step 4: Give Pool Factory Permission on the Pool Manager then transfer factory ownership to admin
     */
     await poolManager.addAuthorized(RewardApeFactory.address);
+    await poolManager.transferOwnership(adminAddress);
 
     /*
-        Step 4: Deploy a new pool & it should be added to the list!
+        Step 5: Deploy a new pool with the owner & it should be added to the list!
     */
     await rewardApeFactory.deployComputedPoolContract(
         GNANA, 
-        BANANA, 
-        "100",
-        "100000000",
-        "1000000000000000000",
+        BUSD, 
+        "19000000",
+        "5000000",
+        "10000000000000000000",
         adminAddress
     )
+
+    console.log('wow it all worky');
 };
