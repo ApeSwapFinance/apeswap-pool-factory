@@ -16,7 +16,6 @@ contract PoolManager is Authorizable {
     EnumerableSet.AddressSet private legacyPoolList;
     IERC20 public governanceToken;
 
-    event AddPools(address[] pools, bool isLegacy);
     event AddPool(address pool, bool isLegacy);
     event RemovePools(address[] pools, bool isLegacy);
     event GovernanceTokenChange(IERC20 newGovernanceToken);
@@ -44,21 +43,9 @@ contract PoolManager is Authorizable {
     }
 
     function addPools(address[] calldata _pools, bool _isLegacy) public onlyAuthorized {
-        if (_isLegacy) {
-            for (uint i = 0; i < _pools.length; i++) { 
-                if (!legacyPoolList.contains(_pools[i])) {
-                    legacyPoolList.add(_pools[i]);
-                }
-            }
-        } else {
-            for (uint i = 0; i < _pools.length; i++) { 
-                if (!fullPoolList.contains(_pools[i])) {
-                    fullPoolList.add(_pools[i]);
-                }
-            }
+        for (uint i = 0; i < _pools.length; i++) {
+            addPool(_pools[i], _isLegacy);
         }
-
-        emit AddPools(_pools, _isLegacy);
     }
 
     function removePools(address[] calldata _pools, bool _isLegacy) public onlyAuthorized {
@@ -68,7 +55,7 @@ contract PoolManager is Authorizable {
             }
         } else {
             for (uint i = 0; i < _pools.length; i++) { 
-                fullPoolList.add(_pools[i]);
+                fullPoolList.remove(_pools[i]);
             }
         }
 
