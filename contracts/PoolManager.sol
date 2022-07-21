@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: HORNEY
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.4;
 
@@ -12,7 +12,7 @@ contract PoolManager is Authorizable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
-    EnumerableSet.AddressSet private fullPoolList;
+    EnumerableSet.AddressSet private newPoolList;
     EnumerableSet.AddressSet private legacyPoolList;
     IERC20 public governanceToken;
 
@@ -29,13 +29,14 @@ contract PoolManager is Authorizable {
     */
 
     function addPool(address _pool, bool _isLegacy) public onlyAuthorized {
+        IRewardPool pool = IRewardPool(_pool);
         if (_isLegacy) {
-            if (!legacyPoolList.contains(_pool)) {
+            if (!legacyPoolList.contains(_pool) && pool.stakeToken() != address(0)) {
                 legacyPoolList.add(_pool);
             }
         } else {
-            if (!fullPoolList.contains(_pool)) {
-                fullPoolList.add(_pool);
+            if (!newPoolList.contains(_pool) && pool.STAKE_TOKEN() != address(0)) {
+                newPoolList.add(_pool);
             }
         }
 
@@ -55,25 +56,19 @@ contract PoolManager is Authorizable {
             }
         } else {
             for (uint i = 0; i < _pools.length; i++) { 
-                fullPoolList.remove(_pools[i]);
+                newPoolList.remove(_pools[i]);
             }
         }
 
         emit RemovePools(_pools, _isLegacy);
     }
 
-    function changeGovernanceToken(IERC20 _governanceToken) public onlyOwner {
-        governanceToken = _governanceToken;
-
-        emit GovernanceTokenChange(_governanceToken);
-    }
-
     /*
         Read Functions - Public 
     */
 
-    function allPools() external view returns (address[] memory) {
-        return fullPoolList.values();
+    function allNewPools() external view returns (address[] memory) {
+        return newPoolList.values();
     }
 
     function allLegacyPools() external view returns (address[] memory) {
@@ -108,8 +103,16 @@ contract PoolManager is Authorizable {
     function getActivePoolCount() external view returns (uint) {
         uint256 count = 0;
 
-        for (uint256 i = 0; i < fullPoolList.length(); i++) { 
-            address pool = fullPoolList.at(i);
+        for (uint256 i = 0; i < newPoolList.length(); i++) { 
+            address pool = newPoolList.at(i);
+            uint256 endBlock = IRewardPool(pool).bonusEndBlock();
+            if (endBlock > block.number) {
+                ++count;
+            }
+        }
+
+        for (uint256 i = 0; i < legacyPoolList.length(); i++) { 
+            address pool = legacyPoolList.at(i);
             uint256 endBlock = IRewardPool(pool).bonusEndBlock();
             if (endBlock > block.number) {
                 ++count;
@@ -123,8 +126,17 @@ contract PoolManager is Authorizable {
         address[] memory _activePoolList = new address[](this.getActivePoolCount());
         uint256 count = 0;
 
-        for (uint256 i = 0; i < fullPoolList.length(); i++) { 
-            address pool = fullPoolList.at(i);
+        for (uint256 i = 0; i < newPoolList.length(); i++) { 
+            address pool = newPoolList.at(i);
+            uint256 endBlock = IRewardPool(pool).bonusEndBlock();
+            if (endBlock > block.number) {
+                _activePoolList[count] = pool;
+                ++count;
+            }
+        }
+
+        for (uint256 i = 0; i < legacyPoolList.length(); i++) { 
+            address pool = legacyPoolList.at(i);
             uint256 endBlock = IRewardPool(pool).bonusEndBlock();
             if (endBlock > block.number) {
                 _activePoolList[count] = pool;
