@@ -1,7 +1,7 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 require('dotenv').config();
 
-const BSC_DEPLOYER_KEY = process.env.BSC_DEPLOYER_KEY;
+const MAINNET_DEPLOYER_KEY = process.env.MAINNET_DEPLOYER_KEY;
 const BSC_TESTNET_DEPLOYER_KEY = process.env.BSC_TESTNET_DEPLOYER_KEY;
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
       skipDryRun: true
     },
     bsc: {
-      provider: () => new HDWalletProvider(BSC_DEPLOYER_KEY, `https://bsc-dataseed1.binance.org`),
+      provider: () => new HDWalletProvider(MAINNET_DEPLOYER_KEY, `https://bsc-dataseed1.binance.org`),
       network_id: 56,
       confirmations: 10,
       timeoutBlocks: 200,
