@@ -8,18 +8,21 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./Authorizable.sol";
 import "./interfaces/IRewardPool.sol";
 
-contract PoolManager is Authorizable {
+contract PoolManagerV2 is Authorizable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
 
     EnumerableSet.AddressSet private newPoolList;
     EnumerableSet.AddressSet private legacyPoolList;
+    IERC20 public governanceToken;
 
     event AddPool(address pool, bool isLegacy);
     event RemovePools(address[] pools, bool isLegacy);
     event GovernanceTokenChange(IERC20 newGovernanceToken);
 
-    constructor() {}
+    constructor(IERC20 _governanceToken) {
+        governanceToken = _governanceToken;
+    }
 
     /*
         Write Functions - Permissioned
@@ -28,16 +31,11 @@ contract PoolManager is Authorizable {
     function addPool(address _pool, bool _isLegacy) public onlyAuthorized {
         IRewardPool pool = IRewardPool(_pool);
         if (_isLegacy) {
-            if (
-                !legacyPoolList.contains(_pool) &&
-                pool.stakeToken() != address(0)
-            ) {
+            if (!legacyPoolList.contains(_pool) && pool.stakeToken() != address(0)) {
                 legacyPoolList.add(_pool);
             }
         } else {
-            if (
-                !newPoolList.contains(_pool) && pool.STAKE_TOKEN() != address(0)
-            ) {
+            if (!newPoolList.contains(_pool) && pool.STAKE_TOKEN() != address(0)) {
                 newPoolList.add(_pool);
             }
         }
@@ -45,25 +43,19 @@ contract PoolManager is Authorizable {
         emit AddPool(_pool, _isLegacy);
     }
 
-    function addPools(address[] calldata _pools, bool _isLegacy)
-        public
-        onlyAuthorized
-    {
-        for (uint256 i = 0; i < _pools.length; i++) {
+    function addPools(address[] calldata _pools, bool _isLegacy) public onlyAuthorized {
+        for (uint i = 0; i < _pools.length; i++) {
             addPool(_pools[i], _isLegacy);
         }
     }
 
-    function removePools(address[] calldata _pools, bool _isLegacy)
-        public
-        onlyAuthorized
-    {
+    function removePools(address[] calldata _pools, bool _isLegacy) public onlyAuthorized {
         if (_isLegacy) {
-            for (uint256 i = 0; i < _pools.length; i++) {
+            for (uint i = 0; i < _pools.length; i++) { 
                 legacyPoolList.remove(_pools[i]);
             }
         } else {
-            for (uint256 i = 0; i < _pools.length; i++) {
+            for (uint i = 0; i < _pools.length; i++) { 
                 newPoolList.remove(_pools[i]);
             }
         }
@@ -83,10 +75,35 @@ contract PoolManager is Authorizable {
         return legacyPoolList.values();
     }
 
-    function getActivePoolCount() external view returns (uint256) {
+    function viewTotalGovernanceHoldings(address userAddress) external view returns (uint256) {
+        uint256 stakedBalance;
+        uint256 holdingBalance = governanceToken.balanceOf(userAddress);
+        address[] memory activePools = this.allActivePools();
+        
+        for (uint256 i = 0; i < activePools.length; i++) { 
+            IRewardPool pool = IRewardPool(activePools[i]);
+            if (legacyPoolList.contains(activePools[i])) {
+                if (pool.stakeToken() == address(governanceToken)) {
+                    IRewardPool.UserInfo memory userInfo = pool.userInfo(userAddress);
+                    uint256 stakedAmount = userInfo.amount;
+                    stakedBalance += stakedAmount;
+                }
+            } else {
+                if (pool.STAKE_TOKEN() == address(governanceToken)) {
+                    IRewardPool.UserInfo memory userInfo = pool.userInfo(userAddress);
+                    uint256 stakedAmount = userInfo.amount;
+                    stakedBalance += stakedAmount;
+                }
+            }
+        }
+
+        return holdingBalance + stakedBalance;
+    }
+
+    function getActivePoolCount() external view returns (uint) {
         uint256 count = 0;
 
-        for (uint256 i = 0; i < newPoolList.length(); i++) {
+        for (uint256 i = 0; i < newPoolList.length(); i++) { 
             address pool = newPoolList.at(i);
             uint256 endBlock = IRewardPool(pool).bonusEndBlock();
             if (endBlock > block.number) {
@@ -94,7 +111,7 @@ contract PoolManager is Authorizable {
             }
         }
 
-        for (uint256 i = 0; i < legacyPoolList.length(); i++) {
+        for (uint256 i = 0; i < legacyPoolList.length(); i++) { 
             address pool = legacyPoolList.at(i);
             uint256 endBlock = IRewardPool(pool).bonusEndBlock();
             if (endBlock > block.number) {
@@ -106,12 +123,10 @@ contract PoolManager is Authorizable {
     }
 
     function allActivePools() external view returns (address[] memory) {
-        address[] memory _activePoolList = new address[](
-            this.getActivePoolCount()
-        );
+        address[] memory _activePoolList = new address[](this.getActivePoolCount());
         uint256 count = 0;
 
-        for (uint256 i = 0; i < newPoolList.length(); i++) {
+        for (uint256 i = 0; i < newPoolList.length(); i++) { 
             address pool = newPoolList.at(i);
             uint256 endBlock = IRewardPool(pool).bonusEndBlock();
             if (endBlock > block.number) {
@@ -120,7 +135,7 @@ contract PoolManager is Authorizable {
             }
         }
 
-        for (uint256 i = 0; i < legacyPoolList.length(); i++) {
+        for (uint256 i = 0; i < legacyPoolList.length(); i++) { 
             address pool = legacyPoolList.at(i);
             uint256 endBlock = IRewardPool(pool).bonusEndBlock();
             if (endBlock > block.number) {

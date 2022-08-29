@@ -25,13 +25,30 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true
     },
-  },
+    polygon: {
+      provider: () => new HDWalletProvider(process.env.MAINNET_DEPLOYER_KEY, `https://rpc-mainnet.matic.network`),
+      network_id: 137,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true
+    },
+    bttc: {
+      provider: () => new HDWalletProvider(process.env.MAINNET_DEPLOYER_KEY, "https://rpc.bittorrentchain.io"),
+      network_id: 199,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true
+    },
+  },  
   plugins: [
     'truffle-plugin-verify'
   ],
   api_keys: {
     // Add BSCSCAN_API_KEY in .env file to verify contracts deployed through truffle
-    etherscan: process.env.BSCSCAN_API_KEY
+    etherscan: process.env.BSCSCAN_API_KEY,
+    polygonscan: process.env.POLYGONSCAN_API_KEY,
+    bscscan: process.env.BSCSCAN_API_KEY,
+    bttcscan: process.env.BTTC_API_KEY,
   },
   // Set default mocha options here, use special reporters etc.
   mocha: {
