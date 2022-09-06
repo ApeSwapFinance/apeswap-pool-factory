@@ -13,7 +13,8 @@
     "migrate:bsc": "truffle migrate --network bsc",
     "verify:testnet": "truffle run verify RewardApeFactory --network testnet",
     "verify:bsc": "truffle run verify BEP20RewardApeV4 --network testnet",
-    "verify:bscc": "truffle run verify RewardApeFactory --network testnet && truffle run verify BEP20RewardApeV4 --network testnet"
+    "verify:bscc": "truffle run verify RewardApeFactory --network testnet && truffle run verify BEP20RewardApeV4 --network testnet",
+    "script:gnana": "ts-node ./scripts/querySkimmableFees.ts"
   },
   "author": "DeFiFoFum",
   "license": "ISC",
