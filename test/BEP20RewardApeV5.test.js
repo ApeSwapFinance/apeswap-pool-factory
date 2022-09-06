@@ -3,11 +3,11 @@ const { accounts, contract } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 
 // Load compiled artifacts
-const BEP20RewardApeV4 = contract.fromArtifact('BEP20RewardApeV4');
+const BEP20RewardApeV5 = contract.fromArtifact('BEP20RewardApeV5');
 const MockBEP20 = contract.fromArtifact('MockBEP20');
 
 
-describe('BEP20RewardApeV4', async function () {
+describe('BEP20RewardApeV5', async function () {
     // NOTE: This is required because advanceBlockTo takes time
     this.timeout(10000);
     const [minter, admin, alice, bob, carol] = accounts;
@@ -41,7 +41,7 @@ describe('BEP20RewardApeV4', async function () {
         that.TOTAL_REWARDS = that.REWARD_APE_DETAILS.rewardPerBlock.mul(new BN(that.BLOCK_DIFF));
 
 
-        that.rewardApe = await BEP20RewardApeV4.new({ from: admin });
+        that.rewardApe = await BEP20RewardApeV5.new({ from: admin });
         await that.rewardApe.initialize(
             that.REWARD_APE_DETAILS.stakeToken,
             that.REWARD_APE_DETAILS.rewardToken,
@@ -79,8 +79,8 @@ describe('BEP20RewardApeV4', async function () {
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
 
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, { from: alice })
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, { from: bob });
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, alice, { from: alice })
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, bob, { from: bob });
 
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.startBlock + this.BLOCK_DIFF / 2)
         });
@@ -132,8 +132,8 @@ describe('BEP20RewardApeV4', async function () {
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
 
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, { from: alice })
-            await this.rewardApe.deposit(DEPOSIT_AMOUNT, { from: bob });
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, alice, { from: alice })
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, bob, { from: bob });
 
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.startBlock + this.BLOCK_DIFF / 2)
         });
@@ -187,6 +187,21 @@ describe('BEP20RewardApeV4', async function () {
             expect(rewardBalance).to.be.bignumber.equal(this.TOTAL_REWARDS.div(new BN('2')));
 
         });
+    });
+
+    it('Should be able to deposit for someone else', async function () {
+        const DEPOSIT_AMOUNT = ether('100');
+
+        await setupPool(this, { fillPool: false });
+        await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: alice })
+        await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
+
+        await this.rewardApe.depositTo(DEPOSIT_AMOUNT, carol, { from: alice });
+        await this.rewardApe.depositTo(DEPOSIT_AMOUNT, carol, { from: bob });
+
+        const userInfoCarol = await this.rewardApe.userInfo(carol);
+        expect(userInfoCarol.amount).to.be.bignumber.equal(ether("200"));
+
     });
 });
 
