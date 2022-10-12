@@ -1,5 +1,5 @@
 const PoolManager = artifacts.require("PoolManager");
-const RewardApeFactory = artifacts.require("RewardApeFactory");
+const RewardApeFactory = artifacts.require("RewardApeFactoryV2");
 const { getNetworkConfig } = require('../deploy-config')
 
 module.exports = async function (deployer, network, accounts) {
