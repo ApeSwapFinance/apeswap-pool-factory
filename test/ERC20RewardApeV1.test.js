@@ -1,5 +1,5 @@
 const { expectRevert, time, ether, BN } = require('@openzeppelin/test-helpers');
-const { accounts, contract } = require('@openzeppelin/test-environment');
+const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 
 // Load compiled artifacts
@@ -11,7 +11,7 @@ describe('ERC20RewardApeV1', async function () {
     this.timeout(10000);
     const [minter, admin, alice, bob, carol] = accounts;
     // pass `this` to add the standard variables to each block
-    async function setupPool(that, { fillPool } = { fillPool: true }) {
+    async function setupPool(that, native, { fillPool } = { fillPool: true }) {
         that.stakeToken = await MockBEP20.new('Stake Token', 'STAKE', ether('1000000'), { from: minter });
         that.rewardToken = await MockBEP20.new('Reward Token', 'REWARD', ether('1000000'), { from: minter });
 
@@ -31,7 +31,7 @@ describe('ERC20RewardApeV1', async function () {
 
         that.REWARD_APE_DETAILS = {
             stakeToken: that.stakeToken.address,
-            rewardToken: that.rewardToken.address,
+            rewardToken: native ? "0x0000000000000000000000000000000000000000" : that.rewardToken.address,
             rewardPerSecond: ether('.2'),
             startTime: startTime,
             endTime: startTime + that.TIME_DIFF,
@@ -49,11 +49,15 @@ describe('ERC20RewardApeV1', async function () {
         )
 
         if (fillPool) {
-            await that.rewardToken.transfer(
-                that.rewardApe.address,
-                that.REWARD_APE_DETAILS.rewardPerSecond.mul(new BN(that.TIME_DIFF)),
-                { from: minter }
-            )
+            if (native) {
+                await web3.eth.sendTransaction({ to: that.rewardApe.address, from: minter, value: that.REWARD_APE_DETAILS.rewardPerSecond.mul(new BN(that.TIME_DIFF)) })
+            } else {
+                await that.rewardToken.transfer(
+                    that.rewardApe.address,
+                    that.REWARD_APE_DETAILS.rewardPerSecond.mul(new BN(that.TIME_DIFF)),
+                    { from: minter }
+                )
+            }
         }
     }
 
@@ -71,7 +75,7 @@ describe('ERC20RewardApeV1', async function () {
         const DEPOSIT_AMOUNT = ether('100');
 
         before(async () => {
-            await setupPool(this);
+            await setupPool(this, false);
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: alice })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
@@ -122,7 +126,7 @@ describe('ERC20RewardApeV1', async function () {
         const DEPOSIT_AMOUNT = ether('100');
 
         before(async () => {
-            await setupPool(this, { fillPool: false });
+            await setupPool(this, false, { fillPool: false });
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: alice })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
             await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
@@ -184,10 +188,48 @@ describe('ERC20RewardApeV1', async function () {
         });
     });
 
+    describe('Unharvested Rewards Native', async function () {
+        const DEPOSIT_AMOUNT = ether('100');
+
+        before(async () => {
+            await setupPool(this, true);
+            await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: alice })
+            await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
+            await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: carol })
+
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, alice, { from: alice })
+            await this.rewardApe.depositTo(DEPOSIT_AMOUNT, bob, { from: bob });
+            await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.startTime + this.TIME_DIFF / 2)
+        });
+
+        it('should allow pool withdraw and transfer reward tokens', async () => {
+            const rewardBalanceBefore = await web3.eth.getBalance(alice);
+            await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.endTime);
+            await this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: alice });
+
+            const rewardBalanceAfter = await web3.eth.getBalance(alice);
+            expect(new BN(rewardBalanceAfter).sub(new BN(rewardBalanceBefore)).add(ether('0.01'))).to.be.bignumber.greaterThan(ether('10'));
+        });
+
+        it('should allow final pool withdraw and transfer reward tokens', async () => {
+            const rewardBalanceBefore = await web3.eth.getBalance(bob);
+            await this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: bob });
+
+            const rewardBalanceAfter = await web3.eth.getBalance(bob);
+            expect(new BN(rewardBalanceAfter).sub(new BN(rewardBalanceBefore)).add(ether('0.01'))).to.be.bignumber.greaterThan(this.TOTAL_REWARDS.div(new BN('2')));
+
+            const poolCalculatedRewardBalance = await this.rewardApe.rewardBalance();
+            expect(poolCalculatedRewardBalance).to.be.bignumber.equal(ether('0'));
+
+            const poolRewardBalance = await this.rewardToken.balanceOf(this.rewardApe.address);
+            expect(poolRewardBalance).to.be.bignumber.equal(ether('0'));
+        });
+    });
+
     it('Should be able to deposit for someone else', async function () {
         const DEPOSIT_AMOUNT = ether('100');
 
-        await setupPool(this, { fillPool: false });
+        await setupPool(this, false, { fillPool: false });
         await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: alice })
         await this.stakeToken.approve(this.rewardApe.address, DEPOSIT_AMOUNT, { from: bob })
 
@@ -196,7 +238,6 @@ describe('ERC20RewardApeV1', async function () {
 
         const userInfoCarol = await this.rewardApe.userInfo(carol);
         expect(userInfoCarol.amount).to.be.bignumber.equal(ether("200"));
-
     });
 });
 

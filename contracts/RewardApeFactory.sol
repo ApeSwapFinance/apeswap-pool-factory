@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./ERC20RewardApeV1.sol";
+import "./BEP20RewardApeV5.sol";
 import "./interfaces/IPoolManager.sol";
 
 contract RewardApeFactory is Ownable {
@@ -40,7 +40,7 @@ contract RewardApeFactory is Ownable {
         uint256 _startBlock,
         uint256 _bonusEndBlock,
         address _owner) public onlyOwner {
-    ERC20RewardApeV1 pool = new ERC20RewardApeV1();
+    BEP20RewardApeV5 pool = new BEP20RewardApeV5();
 
     pool.initialize(_stakeToken, _rewardToken, _rewardPerBlock, _startBlock, _bonusEndBlock);
 
