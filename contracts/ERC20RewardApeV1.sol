@@ -70,7 +70,7 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
     PoolInfo public poolInfo;
     // Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
-    // Total allocation poitns. Must be the sum of all allocation points in all pools.
+    // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 private totalAllocPoint = 0;
     // The timestamp number when Reward mining starts.
     uint256 public startTime;
@@ -217,7 +217,7 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
                     rewardBalance() >= pending,
                     "insufficient reward balance"
                 );
-                safeTransferRewardInternal(_user, pending);
+                safeTransferRewardInternal(_user, pending, true);
             }
         }
 
@@ -254,7 +254,7 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
         if (pending > 0) {
             // If rewardBalance is low then revert to avoid losing the user's rewards
             require(rewardBalance() >= pending, "insufficient reward balance");
-            safeTransferRewardInternal(address(msg.sender), pending);
+            safeTransferRewardInternal(address(msg.sender), pending, true);
         }
 
         if (_amount > 0) {
@@ -271,7 +271,7 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
     }
 
     /// Obtain the reward balance of this contract
-    /// @return wei balace of conract
+    /// @return wei balance of contract
     function rewardBalance() public view returns (uint256) {
         if (isNativeTokenReward) {
             return address(this).balance;
@@ -305,13 +305,19 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
 
     /// @param _to address to send reward token to
     /// @param _amount value of reward token to transfer
-    function safeTransferRewardInternal(address _to, uint256 _amount) internal {
+    function safeTransferRewardInternal(
+        address _to,
+        uint256 _amount,
+        bool _sumRewards
+    ) internal {
         require(_amount <= rewardBalance(), "not enough reward token");
-        totalRewardsPaid += _amount;
+        if (_sumRewards) {
+            totalRewardsPaid += _amount;
+        }
 
         if (isNativeTokenReward) {
             // Transfer native token to address
-            (bool success, ) = _to.call{ gas: 23000, value: _amount }("");
+            (bool success, ) = _to.call{gas: 23000, value: _amount}("");
             require(success, "TransferHelper: NATIVE_TRANSFER_FAILED");
         } else {
             // Transfer ERC20 to address
@@ -362,7 +368,7 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
     function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
         require(_amount <= rewardBalance(), "not enough rewards");
         // Withdraw rewards
-        REWARD_TOKEN.safeTransfer(msg.sender, _amount);
+        safeTransferRewardInternal(msg.sender, _amount, false);
         emit EmergencyRewardWithdraw(msg.sender, _amount);
     }
 
@@ -381,12 +387,6 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
         uint256 balance = token.balanceOf(address(this));
         token.safeTransfer(msg.sender, balance);
         emit EmergencySweepWithdraw(msg.sender, token, balance);
-    }
-
-    /// @notice A public function to sweep native.
-    ///   Tokens are sent to owner
-    function sweepNative() external onlyOwner {
-        owner().call{ gas: 23000, value: address(this).balance }("");
     }
 
     receive() external payable {
