@@ -11,7 +11,7 @@ module.exports = {
       port: 8545,            // Standard BSC port (default: none)
       network_id: "*",       // Any network (default: none)
     },
-    testnet: {
+    "bsc-testnet": {
       provider: () => new HDWalletProvider(BSC_TESTNET_DEPLOYER_KEY, `https://data-seed-prebsc-1-s1.binance.org:8545`),
       network_id: 97,
       confirmations: 2,
@@ -39,7 +39,14 @@ module.exports = {
       timeoutBlocks: 200,
       skipDryRun: true
     },
-  },  
+    tlos: {
+      provider: () => new HDWalletProvider(process.env.MAINNET_DEPLOYER_KEY, "https://rpc1.eu.telos.net/evm"),
+      network_id: 40,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true
+    },
+  },
   plugins: [
     'truffle-plugin-verify'
   ],

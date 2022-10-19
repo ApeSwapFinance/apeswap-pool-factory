@@ -11,8 +11,8 @@ function getNetworkConfig(network, accounts) {
     } else if (['bsc-testnet', 'bsc-testnet-fork'].includes(network)) {
         console.log(`Deploying with ${network} config.`)
         return {
-            adminAddress: "",
-            poolManager: "",
+            adminAddress: "0x5c7C7246bD8a18DF5f6Ee422f9F8CCDF716A6aD2",
+            poolManager: "0x8977d569bAe2F74cBbAf8546B8f073714517E214",
         }
     } else if (['development'].includes(network)) {
         console.log(`Deploying with ${network} config.`)
@@ -31,6 +31,12 @@ function getNetworkConfig(network, accounts) {
         return {
             adminAddress: "0x6c905b4108a87499ced1e0498721f2b831c6ab13",
             poolManager: "0x7AD6115A646D225A9486DC557f17021935b99147",
+        }
+    } else if (['tlos'].includes(network)) {
+        console.log(`Deploying with ${network} config.`)
+        return {
+            adminAddress: "0x5c7C7246bD8a18DF5f6Ee422f9F8CCDF716A6aD2",
+            poolManager: "0xEe57c38d678CaE0cE16168189dB47238d8fe6553",
         }
     } else {
         throw new Error(`No config found for network ${network}.`)
