@@ -366,7 +366,6 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
 
     // Withdraw reward. EMERGENCY ONLY.
     function emergencyRewardWithdraw(uint256 _amount) external onlyOwner {
-        require(_amount <= rewardBalance(), "not enough rewards");
         // Withdraw rewards
         safeTransferRewardInternal(msg.sender, _amount, false);
         emit EmergencyRewardWithdraw(msg.sender, _amount);
