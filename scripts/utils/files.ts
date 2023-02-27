@@ -2,6 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import moment from 'moment';
 
+export const getFilePathWithDate = (fileName: string, baseDir = '.') => baseDir + `/${fileName}-${new Date().toISOString().substring(0, 10)}`
+
+
 export const getCurrentDirectoryBase = (): string => {
 	return path.basename(process.cwd());
 };

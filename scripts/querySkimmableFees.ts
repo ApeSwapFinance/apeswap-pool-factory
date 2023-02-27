@@ -1,6 +1,6 @@
 import "dotenv/config"
 import { BN } from "@openzeppelin/test-helpers";
-import { writeJSONToFile } from "./utils/files";
+import { getFilePathWithDate, writeJSONToFile } from "./utils/files";
 import { multicall, Call } from "@defifofum/multicall";
 import BEP20RewardApeV4Build from "../build/contracts/BEP20RewardApeV4.json";
 import { fetchPoolConfig } from "./utils/fetchPools";
@@ -91,8 +91,10 @@ const gnanaNetworkConfig = {
   }, "0");
 
   if (feeData.length) {
-    await writeJSONToFile(__dirname + "/GNANA-SKIM", feeData);
-    console.log(`Saved pairs to file. See ${feeData}.json`);
+    const fileName = `GNANA-SKIM`
+    const filePath = getFilePathWithDate(fileName, __dirname);
+    await writeJSONToFile(filePath, feeData);
+    console.log(`GNANA Fee Skim output saved to file. See ${filePath}.json`);
   }
 
   console.log(`Total pools: ${poolAddresses.length}.`);
