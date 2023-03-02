@@ -83,7 +83,10 @@ const gnanaNetworkConfig = {
         feeBalance_Eth: formatEther(dataArray[0].toString()),
         tx: "",
       };
-    });
+    }).sort((dataA, dataB) => {
+      // Sort descending
+      return parseInt(dataB.feeBalance_Eth) - parseInt(dataA.feeBalance_Eth);
+    });;
   }
 
   const totalFees = feeData.reduce((totalFees, currentFee) => {
