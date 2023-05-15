@@ -31,13 +31,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
+/**
+ * @title ERC20RewardApeV2
+ * @dev This contract implements a reward system for ERC20 token staking.
+ * @notice This version supports pending rewards which prevents denial of withdrawal if rewards are under filled.
+ */
+contract ERC20RewardApeV2 is ReentrancyGuard, Ownable, Initializable {
     using SafeERC20 for IERC20;
 
     // Info of each user.
     struct UserInfo {
         uint256 amount; // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
+        uint256 pendingReward; // Pending reward
     }
 
     // Info of each pool.
@@ -208,16 +214,17 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
         UserInfo storage user = userInfo[_user];
         updatePool();
         if (user.amount > 0) {
-            uint256 pending = (user.amount * poolInfo.accRewardTokenPerShare) /
+            uint256 pending = ((user.amount * poolInfo.accRewardTokenPerShare) /
                 1e30 -
-                user.rewardDebt;
+                user.rewardDebt) + user.pendingReward;
             if (pending > 0) {
-                // If rewardBalance is low then revert to avoid losing the user's rewards
-                require(
-                    rewardBalance() >= pending,
-                    "insufficient reward balance"
-                );
-                safeTransferRewardInternal(_user, pending, true);
+                uint256 rewardBal = rewardBalance();
+                if (pending > rewardBal) {
+                    user.pendingReward = pending - rewardBal;
+                    safeTransferRewardInternal(_user, rewardBal, true);
+                } else {
+                    safeTransferRewardInternal(_user, pending, true);
+                }
             }
         }
 
@@ -248,13 +255,17 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool();
-        uint256 pending = (user.amount * poolInfo.accRewardTokenPerShare) /
+        uint256 pending = ((user.amount * poolInfo.accRewardTokenPerShare) /
             1e30 -
-            user.rewardDebt;
+            user.rewardDebt) + user.pendingReward;
         if (pending > 0) {
-            // If rewardBalance is low then revert to avoid losing the user's rewards
-            require(rewardBalance() >= pending, "insufficient reward balance");
-            safeTransferRewardInternal(address(msg.sender), pending, true);
+            uint256 rewardBal = rewardBalance();
+            if (pending > rewardBal) {
+                user.pendingReward = pending - rewardBal;
+                safeTransferRewardInternal(msg.sender, rewardBal, true);
+            } else {
+                safeTransferRewardInternal(msg.sender, pending, true);
+            }
         }
 
         if (_amount > 0) {
@@ -310,6 +321,7 @@ contract ERC20RewardApeV1 is ReentrancyGuard, Ownable, Initializable {
         uint256 _amount,
         bool _sumRewards
     ) internal {
+        if (_amount == 0) return;
         require(_amount <= rewardBalance(), "not enough reward token");
         if (_sumRewards) {
             totalRewardsPaid += _amount;
