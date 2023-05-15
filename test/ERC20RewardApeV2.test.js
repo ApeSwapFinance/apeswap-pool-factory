@@ -3,10 +3,10 @@ const { accounts, contract, web3 } = require('@openzeppelin/test-environment');
 const { expect } = require('chai');
 
 // Load compiled artifacts
-const ERC20RewardApeV1 = contract.fromArtifact('ERC20RewardApeV1');
+const ERC20RewardApe = contract.fromArtifact('ERC20RewardApeV2');
 const MockBEP20 = contract.fromArtifact('MockBEP20');
 
-describe('ERC20RewardApeV1', async function () {
+describe('ERC20RewardApeV2', async function () {
     // NOTE: This is required because advanceBlockTo takes time
     this.timeout(10000);
     const [minter, admin, alice, bob, carol] = accounts;
@@ -39,7 +39,7 @@ describe('ERC20RewardApeV1', async function () {
 
         that.TOTAL_REWARDS = that.REWARD_APE_DETAILS.rewardPerSecond.mul(new BN(that.TIME_DIFF));
 
-        that.rewardApe = await ERC20RewardApeV1.new({ from: admin });
+        that.rewardApe = await ERC20RewardApe.new({ from: admin });
         await that.rewardApe.initialize(
             that.REWARD_APE_DETAILS.stakeToken,
             that.REWARD_APE_DETAILS.rewardToken,
@@ -143,15 +143,23 @@ describe('ERC20RewardApeV1', async function () {
         });
 
 
-        it('should NOT allow pool withdraw due to low reward balance', async () => {
+        it('should allow pool withdraw due to low reward balance', async () => {
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.endTime);
-            await expectRevert(
-                this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: alice }),
-                'insufficient reward balance'
-            )
+            this.rewardApe.withdraw(0, { from: alice });
 
-            const rewardBalance = await this.rewardToken.balanceOf(alice);
+            let rewardBalance = await this.rewardToken.balanceOf(alice);
             expect(rewardBalance).to.be.bignumber.equal(ether('0'));
+
+            await this.rewardToken.transfer(
+                this.rewardApe.address,
+                this.REWARD_APE_DETAILS.rewardPerSecond.mul(new BN(this.TIME_DIFF)),
+                { from: minter }
+            )
+            await this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: alice });
+            ({ amount, pendingReward } = await this.rewardApe.userInfo(alice));
+            rewardBalance = await this.rewardToken.balanceOf(alice);
+            expect(amount).to.be.bignumber.equal(ether('0'));
+            expect(rewardBalance).to.be.bignumber.greaterThan(ether('0'));
         });
 
         it('should allow a user to emergency withdraw stake tokens', async () => {
