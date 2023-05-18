@@ -145,20 +145,29 @@ describe('ERC20RewardApeV2', async function () {
 
         it('should allow pool withdraw due to low reward balance', async () => {
             await advanceBlocksAndUpdatePool(this, this.REWARD_APE_DETAILS.endTime);
-            this.rewardApe.withdraw(0, { from: alice });
-
+            // Verify initial state
+            let { amount, pendingReward } = await this.rewardApe.userInfo(alice);
+            expect(amount).to.be.bignumber.greaterThan(ether('0'));
+            expect(pendingReward).to.be.bignumber.equal(ether('0'));
+            // Test withdraw and test pending reward increase
+            await this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: alice });
+            ({ amount, pendingReward } = await this.rewardApe.userInfo(alice));
+            expect(amount).to.be.bignumber.equal(ether('0'));
+            expect(pendingReward).to.be.bignumber.greaterThan(ether('0'));
+            // Transfer in Rewards
             let rewardBalance = await this.rewardToken.balanceOf(alice);
             expect(rewardBalance).to.be.bignumber.equal(ether('0'));
-
             await this.rewardToken.transfer(
                 this.rewardApe.address,
                 this.REWARD_APE_DETAILS.rewardPerSecond.mul(new BN(this.TIME_DIFF)),
                 { from: minter }
             )
-            await this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: alice });
+            // Withdraw pending rewards
+            await this.rewardApe.withdraw(0, { from: alice });
             ({ amount, pendingReward } = await this.rewardApe.userInfo(alice));
             rewardBalance = await this.rewardToken.balanceOf(alice);
             expect(amount).to.be.bignumber.equal(ether('0'));
+            expect(pendingReward).to.be.bignumber.equal(ether('0'));
             expect(rewardBalance).to.be.bignumber.greaterThan(ether('0'));
         });
 
@@ -169,7 +178,7 @@ describe('ERC20RewardApeV2', async function () {
             expect(stakeBalance).to.be.bignumber.equal(this.STARTING_BALANCE.alice);
         });
 
-        it('should NOT allow pool withdraw is not staked', async () => {
+        it('should NOT allow pool withdraw if not staked', async () => {
             await expectRevert(
                 this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: carol }),
                 'withdraw: not good'

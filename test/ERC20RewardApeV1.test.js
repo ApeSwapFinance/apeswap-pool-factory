@@ -169,7 +169,7 @@ describe('ERC20RewardApeV1', async function () {
             expect(stakeBalance).to.be.bignumber.equal(this.STARTING_BALANCE.alice);
         });
 
-        it('should NOT allow pool withdraw is not staked', async () => {
+        it('should NOT allow pool withdraw if not staked', async () => {
             await expectRevert(
                 this.rewardApe.withdraw(DEPOSIT_AMOUNT, { from: carol }),
                 'withdraw: not good'

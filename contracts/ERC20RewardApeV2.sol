@@ -214,15 +214,17 @@ contract ERC20RewardApeV2 is ReentrancyGuard, Ownable, Initializable {
         UserInfo storage user = userInfo[_user];
         updatePool();
         if (user.amount > 0) {
+            uint256 userPendingReward = user.pendingReward;
             uint256 pending = ((user.amount * poolInfo.accRewardTokenPerShare) /
                 1e30 -
-                user.rewardDebt) + user.pendingReward;
+                user.rewardDebt) + userPendingReward;
             if (pending > 0) {
                 uint256 rewardBal = rewardBalance();
                 if (pending > rewardBal) {
                     user.pendingReward = pending - rewardBal;
                     safeTransferRewardInternal(_user, rewardBal, true);
                 } else {
+                    if(userPendingReward != 0) { user.pendingReward = 0; }
                     safeTransferRewardInternal(_user, pending, true);
                 }
             }
@@ -255,15 +257,17 @@ contract ERC20RewardApeV2 is ReentrancyGuard, Ownable, Initializable {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool();
+        uint256 userPendingReward = user.pendingReward;
         uint256 pending = ((user.amount * poolInfo.accRewardTokenPerShare) /
             1e30 -
-            user.rewardDebt) + user.pendingReward;
+            user.rewardDebt) + userPendingReward;
         if (pending > 0) {
             uint256 rewardBal = rewardBalance();
             if (pending > rewardBal) {
                 user.pendingReward = pending - rewardBal;
                 safeTransferRewardInternal(msg.sender, rewardBal, true);
             } else {
+                if(userPendingReward != 0) { user.pendingReward = 0; }
                 safeTransferRewardInternal(msg.sender, pending, true);
             }
         }
