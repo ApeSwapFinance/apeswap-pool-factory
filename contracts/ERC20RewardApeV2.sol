@@ -169,9 +169,9 @@ contract ERC20RewardApeV2 is ReentrancyGuard, Ownable, Initializable {
                 ((tokenReward * 1e30) / totalStaked);
         }
         pending =
-            (user.amount * accRewardTokenPerShare) /
+            ((user.amount * accRewardTokenPerShare) /
             1e30 -
-            user.rewardDebt;
+            user.rewardDebt) + user.pendingReward;
     }
 
     // Update reward variables of the given pool to be up-to-date.
