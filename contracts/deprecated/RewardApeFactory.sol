@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./BEP20RewardApeV5.sol";
-import "./interfaces/IPoolManager.sol";
+import "../interfaces/IPoolManager.sol";
 
 contract RewardApeFactory is Ownable {
   address public defaultOwner;
