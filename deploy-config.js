@@ -3,7 +3,8 @@ function getNetworkConfig(network, accounts) {
     if (["bsc", "bsc-fork"].includes(network)) {
         console.log(`Deploying with ${network} config.`)
         return {
-            adminAddress: "0x6c905b4108a87499ced1e0498721f2b831c6ab13",
+            // adminAddress: "0x6c905b4108a87499ced1e0498721f2b831c6ab13", // General Admin EOA
+            adminAddress: "0x50Cf6cdE8f63316b2BD6AACd0F5581aEf5dD235D", // General Admin [BSC Safe Wallet]
             //In case you want to deploy a new poolmanager make sure you deploy the right one in deploy script.
             //You probable want V2 (with viewTotalGovernanceHoldings)
             poolManager: "0x36524d6A9FB579A0b046edfC691ED47C2de5B8bf",

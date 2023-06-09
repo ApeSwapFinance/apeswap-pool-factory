@@ -109,7 +109,7 @@ contract RewardApeFactoryV2 is Ownable {
         return (rewardsPerSecond, bonusEndTime);
     }
 
-    function updateDeafultOwner(address _defaultOwner) public onlyOwner {
+    function updateDefaultOwner(address _defaultOwner) public onlyOwner {
         defaultOwner = _defaultOwner;
     }
 
