@@ -14,7 +14,7 @@ pragma solidity ^0.8.4;
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './BEP20/IBEP20.sol';
+import '../BEP20/IBEP20.sol';
 
 contract BEP20RewardApeV2 is Ownable {
     using SafeMath for uint256;
